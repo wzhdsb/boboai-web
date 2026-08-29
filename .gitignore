@@ -3,6 +3,9 @@ dist/
 # generated types
 .astro/
 
+# APK 直链产物（17MB 二进制，不进 git；获取命令见 CLAUDE.md）
+public/apk/
+
 # dependencies
 node_modules/
 
@@ -18,3 +21,6 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+
+# IDE
+.idea/

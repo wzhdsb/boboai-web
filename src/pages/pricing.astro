@@ -1,0 +1,508 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Aurora from "../components/Aurora.astro";
+import { VERSION, APK } from "../config";
+
+// ===== 订阅周期 =====
+// 约定：radio id = `cy-${key}`，价格组 class = `pg-${key}` —— 标记与 <style> 里的
+// 兄弟选择器联动均按此约定从 key 派生；增删周期改 CYCLES / PRICES 并同步选中态选择器即可。
+type CycleKey = "1m" | "3m" | "1y" | "life";
+type NoteSeg = string | { b: string }; // string 渲染为普通文本，{ b } 渲染为加粗强调
+
+interface Cycle {
+  key: CycleKey;
+  label: string; // 切换器文案
+  per: string; // 价格后缀（如「/ 月」「一次性」）
+  save?: string; // 切换器角标（占位文案）
+  note: NoteSeg[]; // 价格下备注行（三档共用的文案）
+}
+
+const CYCLES: Cycle[] = [
+  { key: "1m", label: "1 个月", per: "/ 月", note: ["按月支付 · 到期可续订或升级"] },
+  { key: "3m", label: "3 个月", per: "/ 月", note: ["3 个月一付 · 合计 ", { b: "¥xxx" }] },
+  { key: "1y", label: "1 年", per: "/ 月", save: "省 XX%", note: ["年付一付 · 合计 ", { b: "¥xxx" }, " · ", { b: "立省 XX%" }] },
+  { key: "life", label: "终身", per: "一次性", note: ["一次性买断 · 永久有效"] },
+];
+
+const DEFAULT_CYCLE: CycleKey = "1y"; // 默认选中 1 年
+
+// ===== 三档权益（内容与 index.astro 的 tiers 保持一致） =====
+type TierTag = "V0" | "V1" | "V2";
+
+interface Tier {
+  name: string;
+  tag: TierTag; // 兼作价格表 PRICES 的行 key
+  hot: boolean;
+  desc: string;
+  items: string[];
+  cta: string;
+}
+
+const TIERS: Tier[] = [
+  {
+    name: "基础版",
+    tag: "V0",
+    hot: false,
+    desc: "开箱即用的日常主力",
+    items: ["AI 对话·识图·语音", "实时行情与自选持仓", "盘中买卖点提醒", "本地备份与恢复"],
+    cta: "订阅基础版",
+  },
+  {
+    name: "情报版",
+    tag: "V1",
+    hot: false,
+    desc: "把博主情报装进口袋",
+    items: ["基础版全部功能", "多平台博主情报", "定时轮询与提醒", "专属知识库"],
+    cta: "订阅情报版",
+  },
+  {
+    name: "旗舰版",
+    tag: "V2",
+    hot: true,
+    desc: "全能力 · 越用越懂你",
+    items: ["情报版全部功能", "每日三档消息面日报", "AI 深度个股分析", "预判回验与错案反哺"],
+    cta: "订阅旗舰版",
+  },
+];
+
+// ===== 二维价格表：PRICES[档位][周期] 驱动 3 档 × 4 周期共 12 组价格区 =====
+// TODO(定价公告)：¥xx / ¥xxx 均为占位数字，正式价格以公告为准（「省 XX%」「立省 XX%」同）
+const PRICES: Record<TierTag, Record<CycleKey, string>> = {
+  V0: { "1m": "¥xx", "3m": "¥xx", "1y": "¥xx", life: "¥xxx" },
+  V1: { "1m": "¥xx", "3m": "¥xx", "1y": "¥xx", life: "¥xxx" },
+  V2: { "1m": "¥xx", "3m": "¥xx", "1y": "¥xx", life: "¥xxx" },
+};
+
+// ===== 三步流程 =====
+const STEPS = [
+  { no: "STEP 01", icon: "check", title: "选档订阅", body: "选定档位与支付周期，完成订阅；V0 / V1 / V2 三档随时可补差价上行。" },
+  { no: "STEP 02", icon: "key", title: "收到激活码", body: "激活码随订单即时发放，请复制留存；也可稍后在订单页反复查看。" },
+  { no: "STEP 03", icon: "android", title: "App 内输入解锁", body: "打开 App 的「激活」页输入激活码，对应档位全功能立即解锁。" },
+];
+---
+
+<Layout
+  title="订阅 — BOBO AI 助理"
+  description="BOBO AI 助理订阅定价：V0 基础版 / V1 情报版 / V2 旗舰版，支持 1 个月 / 3 个月 / 1 年 / 终身。订阅后发放激活码，App 内输入即解锁；已订阅低档随时补差价升级。"
+>
+  <Aurora strength="full" />
+  <Nav variant="sub" />
+
+  <!-- 本页新增图标（Layout 雪碧图未含）：激活码 / 升级 / 免责说明 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="4"/><path d="M9.9 14.1 21 3M15.5 8.5l3 3M12 12l2 2"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/></symbol>
+  </svg>
+
+  <!-- ====== 页头 ====== -->
+  <header class="phead">
+    <div class="wrap">
+      <span class="p-eyebrow">Pricing</span>
+      <h1>选择你的<span class="grad">档位</span></h1>
+      <p class="sub">订阅后发放<b>激活码</b>，在 App 内输入即解锁；已订阅低档<b>随时补差价升级</b>。</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- ====== 定价：周期切换 + 三档卡片 + 升级说明 ====== -->
+    <section id="pricing" class="sec-pricing">
+      <div class="wrap">
+        <!-- 周期 radio：必须是 .wrap 的直接子节点并置于最前，供下方兄弟选择器联动（零 JS） -->
+        {CYCLES.map((c) => (
+          <input class="cy-in" type="radio" name="cycle" id={`cy-${c.key}`} value={c.key} checked={c.key === DEFAULT_CYCLE} />
+        ))}
+
+        <div class="cycle">
+          {CYCLES.map((c) => (
+            <label for={`cy-${c.key}`}>
+              {c.label}
+              {c.save && <i class="save" aria-hidden="true">{c.save}</i>}
+            </label>
+          ))}
+        </div>
+
+        <div class="plans">
+          {TIERS.map((t) => (
+            <article class:list={["plan", { "plan--hot": t.hot }]}>
+              {t.hot && <span class="badge">推荐</span>}
+              <div class="tname">{t.name}<span class="tier">{t.tag}</span></div>
+              <p class="tdesc">{t.desc}</p>
+              <div class="pricebox">
+                {CYCLES.map((c) => (
+                  <div class={`pg pg-${c.key}`}>
+                    <div class="pline">
+                      <span class="pnum">{PRICES[t.tag][c.key]}</span>
+                      <span class="pper">{c.per}</span>
+                    </div>
+                    <p class="pnote">
+                      {c.note.map((seg) => (typeof seg === "string" ? seg : <b>{seg.b}</b>))}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <ul>
+                {t.items.map((item) => (
+                  <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>{item}</li>
+                ))}
+              </ul>
+              {/* 占位：暂指向注册登录页，正式版接支付流程 */}
+              <a class={`btn ${t.hot ? "btn-primary" : "btn-ghost"} btn-sm`} href="/login/">
+                {t.hot && <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>}{t.cta}
+              </a>
+            </article>
+          ))}
+        </div>
+
+        <!-- 差价升级说明条 -->
+        <div class="upbar">
+          <span class="ub-ico"><svg class="ic" aria-hidden="true"><use href="#i-up" /></svg></span>
+          <p>已订阅 <b>V0 / V1</b>？升级只补差价——按剩余时长折算，<b>立即生效</b>。</p>
+          {/* 占位：暂指向注册登录页，正式版接账号内的升级流程 */}
+          <a class="btn btn-ghost btn-sm" href="/login/">去升级</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 流程三步 ====== -->
+    <section id="how">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow">How it works</span>
+          <h2>三步开通</h2>
+          <p class="sec-sub">订阅成功后激活码即时发放，在 App 内输入即解锁，无需等待。</p>
+        </div>
+        <ol class="steps">
+          {STEPS.map((s) => (
+            <li class="cell">
+              <div class="st-top">
+                <span class="st-no">{s.no}</span>
+                <span class="ico"><svg class="ic" aria-hidden="true"><use href={`#i-${s.icon}`} /></svg></span>
+              </div>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <!-- ====== 页脚免责 + 下载 App（紧贴共享 Footer 之上）====== -->
+  <div class="endnote">
+    <div class="wrap">
+      <p class="foot-note">
+        <svg class="ic" aria-hidden="true"><use href="#i-info" /></svg>
+        价格与购买渠道以正式公告为准；订阅前请确认已安装 App ——
+        <a class="foot-dl" href={APK}><svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 App</a>
+      </p>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* 页面专属规则：容器/按钮/卡片基类/eyebrow 等复用 Layout 全局样式，此处不重复 */
+
+  /* ============ 页头 ============ */
+  .phead { padding: 64px 0 0; text-align: center; position: relative; }
+  .p-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue-2);
+    animation: rise 0.6s var(--ease) both;
+  }
+  .p-eyebrow::before { content: ""; width: 22px; height: 1.5px; background: linear-gradient(90deg, transparent, var(--blue)); }
+  .p-eyebrow::after { content: ""; width: 22px; height: 1.5px; background: linear-gradient(90deg, var(--blue), transparent); }
+  .phead h1 {
+    font-size: clamp(1.95rem, 4.2vw, 2.75rem);
+    line-height: 1.16;
+    letter-spacing: -0.015em;
+    font-weight: 800;
+    margin-top: 14px;
+    animation: rise 0.6s 0.06s var(--ease) both;
+  }
+  .phead h1 .grad {
+    background: linear-gradient(92deg, var(--blue-2) 10%, var(--violet) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .phead .sub { margin: 16px auto 0; font-size: 1.04rem; color: var(--ink-2); line-height: 1.85; max-width: 34em; animation: rise 0.6s 0.12s var(--ease) both; }
+  .phead .sub b { color: var(--ink-1); font-weight: 650; }
+
+  /* ============ 周期切换器（零 JS · CSS radio） ============ */
+  /* 隐藏 radio：保留可聚焦可点选（label 关联），opacity:0 连同焦点环一起隐去 */
+  .cy-in {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+  .cycle {
+    width: max-content;
+    max-width: 100%;
+    margin: 30px auto 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 7px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 8px 24px rgba(20, 28, 45, 0.05);
+  }
+  .cycle label {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.92rem;
+    font-weight: 650;
+    color: var(--ink-2);
+    white-space: nowrap;
+    padding: 10px 22px;
+    border-radius: 11px;
+    border: 1px solid transparent;
+    transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .cycle label:hover { color: var(--ink-1); background: rgba(0, 0, 0, 0.045); }
+  /* 「1 年」角标：省 XX%（占位） */
+  .save {
+    position: absolute;
+    top: -10px;
+    right: -11px;
+    font-style: normal;
+    font-size: 0.62rem;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    color: var(--blue-soft);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(31, 102, 184, 0.4);
+    border-radius: 999px;
+    padding: 2px 8px;
+    box-shadow: 0 2px 6px rgba(31, 102, 184, 0.14);
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+  /* 选中态：蓝色实底（白字对比 ≥5.7:1）。radio id = cy-<周期 key>，见 frontmatter CYCLES */
+  #cy-1m:checked ~ .cycle label[for="cy-1m"],
+  #cy-3m:checked ~ .cycle label[for="cy-3m"],
+  #cy-1y:checked ~ .cycle label[for="cy-1y"],
+  #cy-life:checked ~ .cycle label[for="cy-life"] {
+    color: #fff;
+    background: linear-gradient(135deg, var(--blue-2), var(--blue-deep));
+    box-shadow: 0 6px 16px rgba(31, 102, 184, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  #cy-1y:checked ~ .cycle label[for="cy-1y"] .save {
+    color: var(--blue-2);
+    background: #fff;
+    border-color: rgba(31, 102, 184, 0.45);
+  }
+  /* 键盘焦点反馈转移到 label 上 */
+  #cy-1m:focus-visible ~ .cycle label[for="cy-1m"],
+  #cy-3m:focus-visible ~ .cycle label[for="cy-3m"],
+  #cy-1y:focus-visible ~ .cycle label[for="cy-1y"],
+  #cy-life:focus-visible ~ .cycle label[for="cy-life"] {
+    outline: 2px solid var(--blue-2);
+    outline-offset: 2px;
+  }
+
+  /* ============ 三档卡片 ============ */
+  .sec-pricing { padding-top: 44px; }
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; align-items: stretch; }
+  .plan {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    padding: 28px 26px;
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 10px 28px rgba(20, 28, 45, 0.06);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s;
+  }
+  .plan:hover { transform: translateY(-4px); border-color: var(--line-strong); box-shadow: 0 18px 40px rgba(20, 28, 45, 0.12); }
+  .plan--hot {
+    border-color: rgba(31, 102, 184, 0.45);
+    background: linear-gradient(180deg, rgba(42, 120, 214, 0.07), rgba(42, 120, 214, 0.02) 46%, var(--s1));
+    box-shadow: 0 14px 36px rgba(31, 102, 184, 0.14);
+  }
+  .plan--hot:hover { border-color: rgba(31, 102, 184, 0.7); box-shadow: 0 20px 44px rgba(31, 102, 184, 0.2); }
+  .plan--hot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(420px 160px at 80% -12%, rgba(42, 120, 214, 0.14), transparent 62%);
+  }
+  .badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.72rem;
+    font-weight: 750;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    padding: 4.5px 12px;
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(31, 102, 184, 0.32);
+  }
+  .tname { font-size: 1.12rem; font-weight: 760; display: flex; align-items: center; gap: 10px; position: relative; }
+  .tier {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    padding: 2px 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .plan--hot .tier { color: var(--blue-soft); border-color: rgba(31, 102, 184, 0.4); }
+  .tdesc { font-size: 0.8rem; color: var(--ink-3); margin-top: 6px; position: relative; }
+
+  /* 价格区：四组按周期显隐（radio 兄弟选择器联动，零 JS）。价格组 class = pg-<周期 key> */
+  .pricebox { margin-top: 16px; min-height: 96px; position: relative; }
+  .pg { display: none; }
+  #cy-1m:checked ~ .plans .pg-1m,
+  #cy-3m:checked ~ .plans .pg-3m,
+  #cy-1y:checked ~ .plans .pg-1y,
+  #cy-life:checked ~ .plans .pg-life { display: block; animation: fadeUp 0.32s var(--ease); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .pline { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .pnum { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .plan--hot .pnum {
+    background: linear-gradient(120deg, var(--blue-2), var(--blue-deep));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .pper { font-size: 0.92rem; font-weight: 600; color: var(--ink-3); }
+  .pnote { margin-top: 7px; font-size: 0.78rem; color: var(--ink-3); line-height: 1.6; }
+  .pnote b { color: var(--blue-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .plan ul { list-style: none; margin-top: 16px; flex: 1; position: relative; }
+  .plan li { display: flex; gap: 10px; align-items: flex-start; padding: 9.5px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.1); font-size: 0.88rem; color: var(--ink-2); line-height: 1.55; }
+  .plan li:last-child { border-bottom: none; }
+  .plan li .ic { width: 16px; height: 16px; margin-top: 3px; color: var(--ink-3); }
+  .plan--hot li .ic { color: var(--blue-2); }
+  .plan .btn { margin-top: 20px; width: 100%; position: relative; }
+
+  /* ============ 差价升级说明条 ============ */
+  .upbar {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(31, 102, 184, 0.28);
+    border-radius: var(--r-lg);
+    background: linear-gradient(180deg, rgba(42, 120, 214, 0.08), rgba(42, 120, 214, 0.04));
+    padding: 18px 22px;
+    position: relative;
+  }
+  .ub-ico {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    color: var(--blue-2);
+    background: rgba(31, 102, 184, 0.1);
+    border: 1px solid rgba(31, 102, 184, 0.3);
+  }
+  .ub-ico .ic { width: 20px; height: 20px; }
+  .upbar p { flex: 1; font-size: 0.92rem; color: var(--ink-1); line-height: 1.7; }
+  .upbar p b { font-weight: 700; color: var(--blue-soft); }
+  .upbar .btn { flex: none; }
+
+  /* ============ 流程三步（.cell/.ico 复用 Layout 全局基类） ============ */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); list-style: none; margin-top: 8px; }
+  .st-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
+  .st-no {
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.14em;
+    color: var(--blue-2);
+    border: 1px solid rgba(31, 102, 184, 0.3);
+    background: rgba(42, 120, 214, 0.08);
+    border-radius: 999px;
+    padding: 3px 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .steps .cell h3 { margin-top: 15px; font-size: 1.02rem; font-weight: 730; position: relative; }
+  .steps .cell p { margin-top: 7px; font-size: 0.875rem; color: var(--ink-2); line-height: 1.75; position: relative; }
+
+  /* ============ 页脚免责行 ============ */
+  .endnote { padding: 8px 0 0; }
+  .foot-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.8;
+  }
+  .foot-note .ic { width: 15px; height: 15px; color: var(--ink-3); }
+  .foot-dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 650;
+    color: var(--blue-soft);
+    border-bottom: 1px solid rgba(31, 102, 184, 0.35);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .foot-dl:hover { color: var(--blue-2); border-color: var(--blue-2); }
+  .foot-dl .ic { width: 14px; height: 14px; }
+
+  /* ============ motion ============ */
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @supports (animation-timeline: view()) {
+    .plan,
+    .upbar,
+    .steps .cell {
+      animation: rise 0.55s var(--ease) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 42%;
+    }
+  }
+
+  /* ============ responsive ============ */
+  @media (max-width: 899px) {
+    .plans { grid-template-columns: 1fr; max-width: 520px; }
+    .steps { grid-template-columns: 1fr; max-width: 520px; }
+  }
+  @media (max-width: 639px) {
+    .phead { padding: 52px 0 0; }
+    .phead .sub { font-size: 0.96rem; }
+    /* 切换器 2×2：四个标签等宽居中配平 */
+    .cycle { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-radius: 18px; padding: 8px; }
+    .cycle label { justify-content: center; padding: 12px 10px; font-size: 0.9rem; border-radius: 12px; }
+    .save { top: -8px; right: 8px; }
+    .plan { padding: 24px 20px; }
+    .pnum { font-size: 2.2rem; }
+    .upbar { flex-wrap: wrap; }
+    .upbar .btn { width: 100%; }
+  }
+</style>

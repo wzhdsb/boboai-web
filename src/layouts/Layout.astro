@@ -14,62 +14,267 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#f7f6f3" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
   </head>
   <body>
+    <!-- 内联 SVG 雪碧图（统一 24 视窗 / 1.7 圆角笔触），导航 / 页面 / 页脚用 <use href="#i-…"> 引用 -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2a78d6" stop-opacity=".18" />
+          <stop offset="1" stop-color="#2a78d6" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <symbol id="i-logo" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="#1f66b8"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="13" y="13" width="8" height="8" rx="2.4" fill="#6357d6"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-8.5 8.5c-1.4 0-2.8-.3-4-.9L3 21l1.4-5.5A8.5 8.5 0 1 1 21 12Z"/><path d="M8.5 10.5h.01M12.5 10.5h.01M16.5 10.5h.01"/></symbol>
+      <symbol id="i-candle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 3v3.2M6 16.8V21M12 2v4.2M12 17.8V22M18 4.5v3.3M18 16.2v3.3"/><rect x="3.8" y="6.2" width="4.4" height="10.6" rx="1.4"/><rect x="9.8" y="6.2" width="4.4" height="11.6" rx="1.4"/><rect x="15.8" y="7.8" width="4.4" height="8.4" rx="1.4"/></symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10.3 19a2 2 0 0 0 3.4 0"/></symbol>
+      <symbol id="i-news" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a1.5 1.5 0 0 1 1.5 1.5V19a2 2 0 0 0 2-2V8h1"/><rect x="4" y="5" width="13.5" height="15" rx="1.8"/><path d="M7 9h7.5M7 12.5h7.5M7 16h4.5"/></symbol>
+      <symbol id="i-at" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 5.2 2A9.5 9.5 0 1 0 18 19.4"/></symbol>
+      <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4.2-4.2M12 14l-4.2-4.2"/><path d="M4 16.5v2A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-2"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+      <symbol id="i-android" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 14 0v4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-4Z"/><path d="M8 9.5h.01M16 9.5h.01" stroke-width="2.4"/><path d="M8.5 3.8 10 6M15.5 3.8 14 6M5 13.5H3.5M20.5 13.5H19"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.2v7.6a1.6 1.6 0 0 1-.85 1.42l-7.4 3.6a1.6 1.6 0 0 1-1.5 0l-7.4-3.6A1.6 1.6 0 0 1 3 15.8V8.2a1.6 1.6 0 0 1 .85-1.42l7.4-3.6a1.6 1.6 0 0 1 1.5 0l7.4 3.6A1.6 1.6 0 0 1 21 8.2Z"/><path d="m3.5 7.5 8.5 4.3 8.5-4.3M12 21v-9.2"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.8-9 4.8-9-4.8L12 3Z"/><path d="m4.7 12.6 7.3 3.9 7.3-3.9M4.7 16.8l7.3 3.9 7.3-3.9"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></symbol>
+      <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7H8l1.5-2.3h5L16 7h2.5A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="13" r="3.4"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 18.3 11a3.8 3.8 0 0 1-.9 7.5H7Z"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+    </svg>
     <slot />
   </body>
 </html>
 
 <style is:global>
+  /* ============ tokens（bento-light 浅色体系） ============ */
   :root {
-    --bg: #0b0e14;
-    --bg-soft: #10141d;
-    --card: #11151f;
-    --border: rgba(148, 163, 197, 0.14);
-    --text: #dfe5f1;
-    --text-dim: #8b93a7;
-    --text-faint: #5d6577;
-    --accent: #5b9dff;
-    --accent-soft: rgba(91, 157, 255, 0.12);
-    --gold: #e6b450;
-    --gold-soft: rgba(230, 180, 80, 0.12);
-    --green: #3fb984;
-    --radius: 14px;
-    --font: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei UI",
-      system-ui, -apple-system, sans-serif;
-    --mono: "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+    --bg: #f7f6f3;
+    /* 面板色：s1 纯白 / s2 暖白 / s3 纸灰 */
+    --s1: #ffffff;
+    --s2: #fbfaf7;
+    --s3: #f3f1ec;
+    /* 文字三档 */
+    --ink-1: #1a1a19;
+    --ink-2: #52514e;
+    --ink-3: #6f6d66;
+    /* 线与网格 */
+    --line: rgba(0, 0, 0, 0.08);
+    --line-strong: rgba(0, 0, 0, 0.16);
+    --grid: rgba(0, 0, 0, 0.07);
+    /* 主蓝一族 */
+    --blue: #2a78d6;
+    --blue-2: #1f66b8;
+    --blue-deep: #184f95;
+    --blue-soft: #1c5cab;
+    /* A 股语义色：红涨绿跌 */
+    --red: #d03b3b;
+    --green: #0a810a;
+    --aqua: #199e70;
+    /* 六格辅助色 */
+    --violet: #6357d6;
+    --orange: #bc4a10;
+    --gold: #6f4c00;
+    --magenta: #b23a68;
+    /* 圆角 / 间距 / 字体 / 动效 */
+    --r-xl: 26px;
+    --r-lg: 20px;
+    --r-md: 16px;
+    --r-sm: 12px;
+    --gap: 14px;
+    --font: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei UI", system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, "Courier New", monospace;
+    --ease: cubic-bezier(0.22, 0.7, 0.3, 1);
   }
+
+  /* ============ reset / 基础 ============ */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   body {
-    background: var(--bg);
-    color: var(--text);
     font-family: var(--font);
-    line-height: 1.7;
+    background: var(--bg);
+    color: var(--ink-1);
+    line-height: 1.6;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
+  /* 静态底衬光：极光层之下的极浅着色 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(720px 420px at 12% -6%, rgba(42, 120, 214, 0.06), transparent 62%),
+      radial-gradient(640px 380px at 96% 4%, rgba(99, 87, 214, 0.05), transparent 60%),
+      radial-gradient(900px 600px at 50% 118%, rgba(42, 120, 214, 0.045), transparent 60%);
+  }
   a { color: inherit; text-decoration: none; }
-  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
-  section { padding: 84px 0; }
-  .kicker {
-    font-size: 13px;
-    letter-spacing: 0.35em;
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  h2 {
-    font-size: clamp(26px, 4vw, 34px);
+  ::selection { background: rgba(42, 120, 214, 0.22); color: var(--ink-1); }
+  :focus-visible { outline: 2px solid var(--blue-2); outline-offset: 3px; border-radius: 6px; }
+
+  /* ============ 容器 / section / 图标 ============ */
+  .wrap { max-width: 1150px; margin: 0 auto; padding: 0 22px; }
+  section { padding: 70px 0; scroll-margin-top: 86px; }
+  .ic { width: 22px; height: 22px; flex: none; }
+
+  /* ============ section 头（eyebrow / kicker） ============ */
+  .sec-head { margin-bottom: 26px; }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.76rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    margin: 10px 0 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue-2);
   }
-  .lead { color: var(--text-dim); max-width: 640px; font-size: 16px; }
-  .grid { display: grid; gap: 16px; }
-  @media (min-width: 720px) {
-    .grid.c3 { grid-template-columns: repeat(3, 1fr); }
+  .eyebrow::before { content: ""; width: 22px; height: 1.5px; background: linear-gradient(90deg, var(--blue), transparent); }
+  .sec-head h2 { font-size: clamp(1.55rem, 3vw, 2.1rem); letter-spacing: -0.01em; margin-top: 12px; font-weight: 780; }
+  .sec-sub { color: var(--ink-3); margin-top: 9px; font-size: 0.95rem; max-width: 46em; }
+
+  /* ============ 按钮 ============ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-weight: 650;
+    font-size: 0.95rem;
+    border-radius: 14px;
+    padding: 13px 24px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), background 0.22s, border-color 0.22s;
+  }
+  .btn .ic { width: 18px; height: 18px; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(31, 102, 184, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(31, 102, 184, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  }
+  .btn-ghost { border-color: var(--line-strong); color: var(--ink-1); background: rgba(255, 255, 255, 0.9); }
+  .btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 0, 0.28);
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(20, 28, 45, 0.08);
+  }
+  .btn-sm { padding: 9px 18px; font-size: 0.86rem; border-radius: 11px; }
+
+  /* ============ 卡片基类（Bento 格） ============ */
+  .cell {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 8px 24px rgba(20, 28, 45, 0.05);
+    padding: 24px;
+    transition: transform 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s;
+  }
+  .cell:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-strong);
+    box-shadow: 0 4px 10px rgba(20, 28, 45, 0.05), 0 18px 38px rgba(20, 28, 45, 0.1);
+  }
+  .cell.acc { border-color: var(--accB); }
+  .cell.acc::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(520px 210px at 88% -18%, var(--glow), transparent 64%);
+  }
+  .cell.acc:hover { border-color: var(--accLine); }
+  .cell--blue { --acc: #1f66b8; --glow: rgba(42, 120, 214, 0.09); --accB: rgba(31, 102, 184, 0.26); --accLine: rgba(31, 102, 184, 0.55); --accS: rgba(31, 102, 184, 0.08); }
+  .cell--red { --acc: #d03b3b; --glow: rgba(208, 59, 59, 0.08); --accB: rgba(208, 59, 59, 0.25); --accLine: rgba(208, 59, 59, 0.55); --accS: rgba(208, 59, 59, 0.07); }
+  .cell--violet { --acc: #6357d6; --glow: rgba(99, 87, 214, 0.09); --accB: rgba(99, 87, 214, 0.26); --accLine: rgba(99, 87, 214, 0.55); --accS: rgba(99, 87, 214, 0.08); }
+  .cell--orange { --acc: #bc4a10; --glow: rgba(188, 74, 16, 0.08); --accB: rgba(188, 74, 16, 0.26); --accLine: rgba(188, 74, 16, 0.55); --accS: rgba(188, 74, 16, 0.07); }
+  .cell--gold { --acc: #6f4c00; --glow: rgba(138, 97, 0, 0.08); --accB: rgba(111, 76, 0, 0.3); --accLine: rgba(111, 76, 0, 0.55); --accS: rgba(138, 97, 0, 0.08); }
+  .cell--magenta { --acc: #b23a68; --glow: rgba(178, 58, 104, 0.08); --accB: rgba(178, 58, 104, 0.26); --accLine: rgba(178, 58, 104, 0.55); --accS: rgba(178, 58, 104, 0.07); }
+  .cell-head { display: flex; align-items: center; gap: 13px; position: relative; }
+  .ico {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    color: var(--acc, var(--blue-2));
+    background: var(--accS, rgba(31, 102, 184, 0.08));
+    border: 1px solid var(--accB, rgba(31, 102, 184, 0.26));
+    transition: transform 0.25s var(--ease);
+  }
+  .cell:hover .ico { transform: scale(1.06) rotate(-3deg); }
+  .cell h3 { font-size: 1.05rem; font-weight: 730; letter-spacing: 0.005em; }
+  .tag {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 0.735rem;
+    font-weight: 600;
+    color: var(--acc, var(--blue-2));
+    border: 1px solid var(--accB, rgba(31, 102, 184, 0.3));
+    background: var(--accS, rgba(31, 102, 184, 0.07));
+    border-radius: 999px;
+    padding: 2.5px 10px;
+  }
+  .cell .body { position: relative; margin-top: 13px; color: var(--ink-2); font-size: 0.9rem; line-height: 1.8; }
+
+  /* ============ details 折叠指示（FAQ / 下载折叠格共用） ============ */
+  .pm {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    flex: none;
+    transition: border-color 0.25s, background 0.25s;
+  }
+  .pm::before,
+  .pm::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 11px;
+    height: 1.6px;
+    border-radius: 2px;
+    background: var(--ink-2);
+    translate: -50% -50%;
+    transition: transform 0.28s var(--ease);
+  }
+  .pm::after { transform: rotate(90deg); }
+  details[open] .pm { border-color: rgba(31, 102, 184, 0.55); background: rgba(42, 120, 214, 0.12); }
+  details[open] .pm::after { transform: rotate(0deg); }
+  details[open] .pm::before,
+  details[open] .pm::after { background: var(--blue-2); }
+
+  /* ============ 动效无障碍：全局冻结 ============ */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ============ 基础响应式 ============ */
+  @media (max-width: 639px) {
+    .wrap { padding: 0 16px; }
+    section { padding: 56px 0; scroll-margin-top: 72px; }
   }
 </style>

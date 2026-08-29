@@ -1,0 +1,451 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Aurora from "../components/Aurora.astro";
+
+// ===== 站内链接 =====
+const APK = "/apk/bobo-v1.7.0.apk"; // 与主页下载直链同源
+
+// ===== 占位数据：以下均为演示数据，正式版接账号 / 订阅 / 订单接口 =====
+// 用户资料（占位：用户名 / ID / 脱敏手机号 / 注册时间）
+const USER = {
+  name: "BOBO 用户",
+  id: "10002468",
+  phone: "138****8888",
+  registered: "2026-01-15",
+};
+
+// 账户资料字段（「修改 / 去绑定」为占位入口：手机号走验证流程、邮箱走绑定流程）
+const fields = [
+  { icon: "phone", label: "手机号", value: USER.phone, action: "修改" },
+  { icon: "mail", label: "邮箱", value: "未绑定", dim: true, action: "去绑定" },
+  { icon: "cal", label: "注册时间", value: USER.registered },
+];
+
+// 当前订阅（V1 情报版）的权益标签
+const perks = [
+  { icon: "layers", text: "基础版全部功能" },
+  { icon: "at", text: "多平台博主情报" },
+  { icon: "clock", text: "定时轮询与提醒" },
+  { icon: "search", text: "专属知识库" },
+];
+
+// 激活码记录（占位：3 条记录的订单号 / 档位 / 周期 / 日期 / 状态均为演示数据，日期与订阅卡的 90 天周期互相衔接）
+const records = [
+  { open: true, date: "2026-07-17", order: "BOBO-20260717-8F3A", tier: "V1 情报版", plan: "V1 情报版（当前生效）", days: "90 天", status: "已使用" },
+  { date: "2026-04-18", order: "BOBO-20260418-C2D9", tier: "V1 情报版", plan: "V1 情报版", days: "90 天", status: "已使用" },
+  { date: "2026-01-18", order: "BOBO-20260118-7E40", tier: "V0 基础版", plan: "V0 基础版", days: "90 天", status: "已使用" },
+];
+---
+
+<Layout
+  title="用户中心 — BOBO AI 助理"
+  description="BOBO AI 助理用户中心：账户信息、订阅状态与激活码记录一处看全。"
+>
+  <!-- 极光层：内页比主页安静一档（soft） -->
+  <Aurora strength="soft" />
+
+  <!-- 子页导航：logo 回首页，右上角已登录态（头像占位 + 用户名占位） -->
+  <Nav variant="sub" avatar={USER.name} />
+
+  <!-- 本页新增图标（与 Layout 全局雪碧图同风格：24 视窗 / stroke 1.7 / round cap） -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10l4 5.5L12 20.5 3 9.5 7 4Z"/><path d="M3 9.5h18M7 4l3.5 5.5 1.5 11M17 4l-3.5 5.5-1.5 11"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="16.5" r="4.2"/><path d="M10.5 13.5 20 4M16.2 7.8l2.8 2.8M18.8 5.2l2 2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.5"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5M20 12H9.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.5 18.3h3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.6"/><path d="m4.5 7.5 7.5 5.5 7.5-5.5"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.6"/><path d="M8 2.8v4.4M16 2.8v4.4M3.5 10.5h17"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+  </svg>
+
+  <!-- ====== 主体：左窄栏 + 右内容 ====== -->
+  <main class="acct">
+    <div class="wrap">
+      <div class="page-head">
+        <span class="eyebrow">Account</span>
+        <h1>账户信息</h1>
+        <p class="sec-sub">账号资料、订阅状态与激活记录，一处看全。</p>
+      </div>
+
+      <div class="acct-layout">
+
+        <!-- 左窄栏导航（移动端折叠为顶部横向可滚动标签条） -->
+        <aside class="side">
+          <nav class="side-nav" aria-label="用户中心导航">
+            <span class="side-cap">用户中心</span>
+            <a class="snav is-cur" href="#profile" aria-current="page">
+              <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>账户信息
+            </a>
+            <a class="snav" href="#subscription">
+              <svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg>我的订阅
+            </a>
+            <a class="snav" href="#redeem">
+              <svg class="ic" aria-hidden="true"><use href="#i-key" /></svg>激活码记录
+            </a>
+            <!-- 下载 App：与主页下载直链同源 -->
+            <a class="snav" href={APK} download>
+              <svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 App
+            </a>
+            <hr class="side-sep" />
+            <!-- 占位：退出登录，正式版为登出请求 -->
+            <a class="snav snav-logout" href="#">
+              <svg class="ic" aria-hidden="true"><use href="#i-logout" /></svg>退出登录
+            </a>
+          </nav>
+        </aside>
+
+        <!-- 右内容区 -->
+        <div class="acct-main">
+
+          <!-- 账户信息卡 -->
+          <article class="cell acc cell--blue" id="profile">
+            <div class="cell-head">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user" /></svg></span>
+              <div><h3>账户信息</h3><span class="tag">已登录</span></div>
+            </div>
+            <div class="profile">
+              <!-- 占位：头像占位圆（首字母）与用户名 / ID，正式版接账号资料接口 -->
+              <span class="avatar avatar-lg" aria-hidden="true">{USER.name.charAt(0)}</span>
+              <div>
+                <div class="uname">{USER.name}</div>
+                <div class="usub">用户 ID {USER.id}</div>
+              </div>
+            </div>
+            <dl class="fields">
+              {fields.map((f) => (
+                <div class="field">
+                  <dt><svg class="ic" aria-hidden="true"><use href={`#i-${f.icon}`} /></svg>{f.label}</dt>
+                  <dd class:list={{ dim: f.dim }}>{f.value}</dd>
+                  {f.action && (
+                    <a class="tlink" href="#">{f.action}<svg class="ic" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+                  )}
+                </div>
+              ))}
+            </dl>
+          </article>
+
+          <!-- 我的订阅卡（信息最密） -->
+          <article class="cell acc cell--violet" id="subscription">
+            <div class="cell-head">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg></span>
+              <div><h3>我的订阅</h3><span class="tag">当前套餐</span></div>
+            </div>
+            <!-- 占位：当前套餐与状态 -->
+            <div class="sp-name">V1 情报版<span class="state"><i></i>生效中</span></div>
+            <div class="pillrow">
+              {perks.map((p) => (
+                <span><svg class="ic" aria-hidden="true"><use href={`#i-${p.icon}`} /></svg>{p.text}</span>
+              ))}
+            </div>
+            <!-- 占位：剩余天数 / 周期 / 起止日期，正式版接订阅接口 -->
+            <div class="remain">
+              <div class="r-top">
+                <span class="r-lab">本订阅周期 · 90 天</span>
+                <span class="r-val">剩余 <b>47</b> 天</span>
+              </div>
+              <div class="r-bar" role="img" aria-label="订阅周期进度：共 90 天，已用 43 天，剩余 47 天">
+                <i style="width:52%"></i>
+              </div>
+              <div class="r-scale">
+                <span>生效日 2026-07-17</span>
+                <span>已用 43 天</span>
+                <span>到期日 2026-10-15</span>
+              </div>
+            </div>
+            <div class="cta-row">
+              <a class="btn btn-primary btn-sm" href="/pricing/">
+                <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>补差价升级 V2
+              </a>
+              <!-- 占位：续费入口，正式版为续费下单流程 -->
+              <a class="btn btn-ghost btn-sm" href="#">续费</a>
+            </div>
+            <p class="s-note"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>升级按剩余时长折算差价，立即生效；续费后新周期自当前到期日顺延。</p>
+          </article>
+
+          <!-- 激活码记录卡（零 JS 折叠列表） -->
+          <article class="cell acc cell--blue" id="redeem">
+            <div class="cell-head">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-key" /></svg></span>
+              <div><h3>激活码记录</h3><span class="tag">共 {records.length} 条</span></div>
+            </div>
+            <div class="recs">
+              {records.map((r) => (
+                <details class="rec" open={r.open || undefined}>
+                  <summary>
+                    <span class="rec-date">{r.date}</span>
+                    <code class="rec-ord">{r.order}</code>
+                    <span class="rec-tier">{r.tier}</span>
+                    <span class="ok-chip"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>{r.status}</span>
+                    <span class="pm"></span>
+                  </summary>
+                  <dl class="rec-dl">
+                    <div class="wide"><dt>订单号</dt><dd><code>{r.order}</code></dd></div>
+                    <div><dt>档位</dt><dd>{r.plan}</dd></div>
+                    <div><dt>订阅周期</dt><dd>{r.days}</dd></div>
+                    <div><dt>激活日期</dt><dd>{r.date}</dd></div>
+                    <div><dt>状态</dt><dd>{r.status}</dd></div>
+                  </dl>
+                </details>
+              ))}
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* ============ 页面骨架：左窄栏 + 右内容（容器比全局窄一档：双栏阅读型布局） ============ */
+  .acct { padding: 48px 0 72px; }
+  .acct .wrap { max-width: 1080px; }
+  .page-head { margin-bottom: 26px; animation: rise 0.6s var(--ease) both; }
+  .page-head h1 { font-size: clamp(1.6rem, 3vw, 2.05rem); letter-spacing: -0.01em; margin-top: 12px; font-weight: 780; }
+  .acct-layout {
+    display: grid;
+    grid-template-columns: 214px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+    animation: rise 0.6s 0.08s var(--ease) both;
+  }
+  .acct-main { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+  .acct-main > * { scroll-margin-top: 88px; }
+  code { font-family: var(--mono); }
+
+  /* ============ 左栏导航 ============ */
+  .side {
+    position: sticky;
+    top: 86px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 8px 24px rgba(20, 28, 45, 0.05);
+    padding: 10px;
+  }
+  .side-cap { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; color: var(--ink-3); padding: 7px 12px 9px; }
+  .side-nav { display: flex; flex-direction: column; gap: 3px; }
+  .snav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .snav .ic { width: 17px; height: 17px; color: var(--ink-3); transition: color 0.2s; }
+  .snav:hover { background: rgba(0, 0, 0, 0.045); color: var(--ink-1); }
+  .snav:hover .ic { color: var(--ink-2); }
+  .snav.is-cur {
+    background: rgba(42, 120, 214, 0.09);
+    border-color: rgba(31, 102, 184, 0.3);
+    color: var(--blue-2);
+    font-weight: 680;
+  }
+  .snav.is-cur::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--blue-2);
+  }
+  .snav.is-cur .ic { color: var(--blue-2); }
+  .side-sep { border: none; border-top: 1px dashed var(--line-strong); margin: 8px 6px; }
+  .snav-logout, .snav-logout .ic { color: var(--ink-3); }
+  .snav-logout:hover, .snav-logout:hover .ic { color: var(--red); background: rgba(208, 59, 59, 0.06); }
+
+  /* ============ 账户信息卡 ============ */
+  .profile { display: flex; align-items: center; gap: 16px; margin-top: 18px; position: relative; }
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex: none;
+    background: linear-gradient(135deg, var(--blue-2), var(--violet));
+    color: #fff;
+    font-weight: 750;
+    font-size: 0.92rem;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65), 0 2px 6px rgba(20, 28, 45, 0.14);
+  }
+  .avatar-lg { width: 62px; height: 62px; font-size: 1.55rem; }
+  .uname { font-size: 1.08rem; font-weight: 730; }
+  .usub { font-size: 0.8rem; color: var(--ink-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .fields { margin-top: 16px; position: relative; }
+  .field {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 12px 2px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
+  }
+  .field dt { display: inline-flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--ink-3); }
+  .field dt .ic { width: 15px; height: 15px; }
+  .field dd { margin-left: auto; font-size: 0.93rem; font-weight: 620; font-variant-numeric: tabular-nums; }
+  .field dd.dim { color: var(--ink-3); font-weight: 500; }
+  .tlink { display: inline-flex; align-items: center; gap: 2px; font-size: 0.84rem; font-weight: 620; color: var(--blue-soft); }
+  .tlink .ic { width: 13px; height: 13px; margin-right: -5px; }
+  .tlink:hover { color: #17457e; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ============ 我的订阅卡 ============ */
+  .sp-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin-top: 18px;
+    font-size: 1.28rem;
+    font-weight: 760;
+    position: relative;
+  }
+  .state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--green);
+    background: rgba(10, 129, 10, 0.07);
+    border: 1px solid rgba(10, 129, 10, 0.28);
+    border-radius: 999px;
+    padding: 3px 11px;
+  }
+  .state i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2.2s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(10, 129, 10, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(10, 129, 10, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(10, 129, 10, 0); }
+  }
+  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; position: relative; }
+  .pillrow span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.735rem;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4.5px 11px;
+    background: rgba(255, 255, 255, 0.75);
+  }
+  .pillrow .ic { width: 13px; height: 13px; color: var(--ink-3); }
+  .remain {
+    margin-top: 16px;
+    border: 1px solid rgba(31, 102, 184, 0.22);
+    border-radius: var(--r-md);
+    background: linear-gradient(180deg, rgba(42, 120, 214, 0.05), rgba(42, 120, 214, 0.015));
+    padding: 15px 16px;
+    position: relative;
+  }
+  .r-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+  .r-lab { font-size: 0.8rem; color: var(--ink-3); }
+  .r-val { margin-left: auto; font-size: 0.92rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .r-val b { font-size: 1.3rem; font-weight: 770; color: var(--ink-1); margin: 0 1px; }
+  .r-bar { margin-top: 11px; height: 9px; border-radius: 99px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
+  .r-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, rgba(42, 120, 214, 0.3), rgba(42, 120, 214, 0.58)); }
+  .r-scale {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .s-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: 0.78rem; color: var(--ink-3); line-height: 1.7; position: relative; }
+  .s-note .ic { width: 14px; height: 14px; margin-top: 3px; color: var(--green); }
+
+  /* ============ 激活码记录卡（零 JS <details> 折叠列表） ============ */
+  .recs { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; position: relative; }
+  .rec { border: 1px solid var(--line); border-radius: var(--r-sm); background: rgba(255, 255, 255, 0.85); transition: border-color 0.25s, background 0.25s; }
+  .rec:hover { border-color: var(--line-strong); }
+  .rec[open] { border-color: rgba(31, 102, 184, 0.35); background: linear-gradient(180deg, rgba(42, 120, 214, 0.06), var(--s1)); }
+  .rec summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 11px 13px;
+  }
+  .rec summary::-webkit-details-marker { display: none; }
+  .rec summary:focus-visible { outline-offset: -2px; }
+  .rec-date { font-size: 0.78rem; color: var(--ink-3); font-variant-numeric: tabular-nums; flex: none; }
+  .rec-ord { font-size: 0.78rem; color: var(--ink-1); letter-spacing: 0.01em; }
+  .rec-tier { font-size: 0.72rem; color: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 6px; padding: 1.5px 8px; flex: none; }
+  .rec .pm { width: 22px; height: 22px; border-radius: 7px; }
+  .rec[open] .pm { border-color: rgba(31, 102, 184, 0.55); background: rgba(42, 120, 214, 0.1); }
+  .ok-chip {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 650;
+    color: var(--green);
+    border: 1px solid rgba(10, 129, 10, 0.28);
+    background: rgba(10, 129, 10, 0.06);
+    border-radius: 999px;
+    padding: 2.5px 10px;
+  }
+  .ok-chip .ic { width: 12px; height: 12px; }
+  .rec-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; padding: 2px 13px 13px; animation: faqIn 0.32s var(--ease); }
+  .rec-dl > div { min-width: 0; }
+  .rec-dl .wide { grid-column: span 2; }
+  .rec-dl dt { font-size: 0.72rem; color: var(--ink-3); }
+  .rec-dl dd { margin-top: 3px; font-size: 0.88rem; font-weight: 620; color: var(--ink-1); font-variant-numeric: tabular-nums; }
+  .rec-dl dd.dim { color: var(--ink-3); font-weight: 500; }
+
+  /* ============ motion ============ */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes faqIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ============ responsive：左栏折叠为顶部横向标签条 ============ */
+  @media (max-width: 899px) {
+    .acct-layout { display: block; }
+    .side { position: static; margin-bottom: 18px; padding: 7px; }
+    .side-cap { display: none; }
+    .side-nav {
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 4px;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .side-nav::-webkit-scrollbar { display: none; }
+    .snav { white-space: nowrap; padding: 8px 13px; }
+    .snav.is-cur::before { display: none; }
+    .side-sep { display: none; }
+  }
+  @media (max-width: 639px) {
+    .acct { padding: 36px 0 56px; }
+    .cell { padding: 20px; border-radius: 22px; }
+    .sp-name { font-size: 1.14rem; }
+    .cta-row .btn { flex: 1 1 auto; }
+    .rec-tier { display: none; }
+  }
+</style>
