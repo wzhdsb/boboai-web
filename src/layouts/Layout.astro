@@ -1,0 +1,75 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+const {
+  title,
+  description = "BOBO AI 助理 — 住进手机里的 AI 助理。GLM 大模型驱动：AI 对话、实时行情、消息面日报、博主情报。",
+} = Astro.props;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #0b0e14;
+    --bg-soft: #10141d;
+    --card: #11151f;
+    --border: rgba(148, 163, 197, 0.14);
+    --text: #dfe5f1;
+    --text-dim: #8b93a7;
+    --text-faint: #5d6577;
+    --accent: #5b9dff;
+    --accent-soft: rgba(91, 157, 255, 0.12);
+    --gold: #e6b450;
+    --gold-soft: rgba(230, 180, 80, 0.12);
+    --green: #3fb984;
+    --radius: 14px;
+    --font: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei UI",
+      system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 84px 0; }
+  .kicker {
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  h2 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 10px 0 14px;
+  }
+  .lead { color: var(--text-dim); max-width: 640px; font-size: 16px; }
+  .grid { display: grid; gap: 16px; }
+  @media (min-width: 720px) {
+    .grid.c3 { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
