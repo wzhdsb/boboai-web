@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f6f3">
+<title>订阅定价 — BOBO AI 助理</title>
+<meta name="description" content="BOBO AI 助理订阅定价：V0 基础版 / V1 情报版 / V2 旗舰版，支持 1 个月 / 3 个月 / 1 年 / 终身。订阅后发放激活码，App 内输入即解锁；已订阅低档随时补差价升级。">
+<style>
+/* ============ tokens（与 bento-light.html 同源） ============ */
+:root{
+  --bg:#f7f6f3;
+  --s1:#ffffff; --s2:#fbfaf7; --s3:#f3f1ec;
+  --ink:#1a1a19; --ink-2:#52514e; --ink-3:#6f6d66;
+  --line:rgba(0,0,0,.08); --line-strong:rgba(0,0,0,.16);
+  --grid:rgba(0,0,0,.07);
+  --blue:#2a78d6; --blue-2:#1f66b8; --blue-deep:#184f95; --blue-soft:#1c5cab;
+  --red:#d03b3b; --green:#0a810a; --aqua:#199e70;
+  --violet:#6357d6; --orange:#bc4a10; --yellow:#6f4c00; --magenta:#b23a68;
+  --r-xl:26px; --r-lg:20px; --r-md:16px; --r-sm:12px;
+  --gap:14px;
+  --font:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --ease:cubic-bezier(.22,.7,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--ink);
+  line-height:1.6;overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(720px 420px at 12% -6%,rgba(42,120,214,.06),transparent 62%),
+    radial-gradient(640px 380px at 96% 4%,rgba(99,87,214,.05),transparent 60%),
+    radial-gradient(900px 600px at 50% 118%,rgba(42,120,214,.045),transparent 60%);
+}
+/* ============ aurora（彩色流动光 · 极光层）============ */
+.aurora{
+  position:absolute;top:0;left:0;right:0;height:160vh;z-index:-1;
+  overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 38%,rgba(0,0,0,.5) 66%,transparent 94%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 38%,rgba(0,0,0,.5) 66%,transparent 94%);
+}
+.aurora i{position:absolute;display:block;border-radius:50%}
+.aurora .a1{
+  width:60vmax;height:60vmax;left:-14vmax;top:-20vmax;
+  background:radial-gradient(closest-side,rgba(42,120,214,.24),rgba(42,120,214,.10) 46%,transparent 72%);
+  animation:au1 36s ease-in-out -4s infinite alternate;
+}
+.aurora .a2{
+  width:54vmax;height:54vmax;right:-16vmax;top:-14vmax;
+  background:radial-gradient(closest-side,rgba(99,87,214,.22),rgba(99,87,214,.09) 46%,transparent 72%);
+  animation:au2 30s ease-in-out -13s infinite alternate;
+}
+.aurora .a3{
+  width:48vmax;height:48vmax;left:30vw;top:2vh;
+  background:radial-gradient(closest-side,rgba(25,158,112,.16),rgba(25,158,112,.06) 45%,transparent 72%);
+  animation:au3 42s ease-in-out -22s infinite alternate;
+}
+.aurora .a4{
+  width:42vmax;height:42vmax;left:-10vmax;top:48vh;
+  background:radial-gradient(closest-side,rgba(178,58,104,.15),rgba(178,58,104,.06) 45%,transparent 72%);
+  animation:au4 26s ease-in-out -9s infinite alternate;
+}
+.aurora .a5{
+  width:50vmax;height:50vmax;right:-8vmax;top:58vh;
+  background:radial-gradient(closest-side,rgba(31,102,184,.18),rgba(31,102,184,.07) 46%,transparent 72%);
+  animation:au5 33s ease-in-out -17s infinite alternate;
+}
+@keyframes au1{from{transform:translate(0,0) scale(1) rotate(0deg)}to{transform:translate(9vmax,5vmax) scale(1.12) rotate(8deg)}}
+@keyframes au2{from{transform:translate(0,0) scale(1.06) rotate(0deg)}to{transform:translate(-8vmax,6vmax) scale(.94) rotate(-7deg)}}
+@keyframes au3{from{transform:translate(0,0) scale(.92);opacity:.85}to{transform:translate(-6vmax,7vmax) scale(1.1);opacity:1}}
+@keyframes au4{from{transform:translate(0,0) scale(1) rotate(0deg)}to{transform:translate(12vmax,-9vmax) scale(1.15) rotate(6deg)}}
+@keyframes au5{from{transform:translate(0,0) scale(1.05);opacity:.9}to{transform:translate(-10vmax,-6vmax) scale(.95);opacity:1}}
+@media (max-width:639px){
+  .aurora{height:135vh}
+  .aurora .a2{right:-22vmax}
+  .aurora .a3{left:6vw}
+}
+::selection{background:rgba(42,120,214,.22);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--blue-2);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1150px;margin:0 auto;padding:0 22px}
+section{padding:70px 0;scroll-margin-top:86px}
+.ic{width:22px;height:22px;flex:none}
+
+/* ============ nav ============ */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(247,246,243,.82);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  animation:dropIn .5s var(--ease) both;
+}
+@keyframes dropIn{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+.nav-in{display:flex;align-items:center;gap:26px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+.brand .logo{width:26px;height:26px}
+.brand small{font-weight:500;color:var(--ink-3);font-size:.78rem;margin-left:2px;letter-spacing:.04em}
+.nav-cta{margin-left:auto}
+
+/* ============ buttons ============ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-weight:650;font-size:.95rem;border-radius:14px;padding:13px 24px;
+  border:1px solid transparent;cursor:pointer;white-space:nowrap;
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),background .22s,border-color .22s;
+}
+.btn .ic{width:18px;height:18px}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;
+  box-shadow:0 8px 20px rgba(31,102,184,.26),inset 0 1px 0 rgba(255,255,255,.28);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(31,102,184,.34),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-ghost{border-color:var(--line-strong);color:var(--ink);background:rgba(255,255,255,.9)}
+.btn-ghost:hover{transform:translateY(-2px);border-color:rgba(0,0,0,.28);background:#fff;box-shadow:0 6px 16px rgba(20,28,45,.08)}
+.btn-sm{padding:9px 18px;font-size:.86rem;border-radius:11px}
+
+/* ============ page head ============ */
+.phead{padding:64px 0 0;text-align:center;position:relative}
+.p-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;font-size:.76rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--blue-2);
+  animation:rise .6s var(--ease) both;
+}
+.p-eyebrow::before{content:"";width:22px;height:1.5px;background:linear-gradient(90deg,transparent,var(--blue))}
+.p-eyebrow::after{content:"";width:22px;height:1.5px;background:linear-gradient(90deg,var(--blue),transparent)}
+.phead h1{
+  font-size:clamp(1.95rem,4.2vw,2.75rem);line-height:1.16;letter-spacing:-.015em;font-weight:800;
+  margin-top:14px;animation:rise .6s .06s var(--ease) both;
+}
+.phead h1 .grad{
+  background:linear-gradient(92deg,var(--blue-2) 10%,var(--violet) 90%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.phead .sub{
+  margin:16px auto 0;font-size:1.04rem;color:var(--ink-2);line-height:1.85;max-width:34em;
+  animation:rise .6s .12s var(--ease) both;
+}
+.phead .sub b{color:var(--ink);font-weight:650}
+
+/* ============ section head（流程区用）============ */
+.sec-head{margin-bottom:26px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;font-size:.76rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--blue-2);
+}
+.eyebrow::before{content:"";width:22px;height:1.5px;background:linear-gradient(90deg,var(--blue),transparent)}
+.sec-head h2{font-size:clamp(1.55rem,3vw,2.1rem);letter-spacing:-.01em;margin-top:12px;font-weight:780}
+.sec-sub{color:var(--ink-3);margin-top:9px;font-size:.95rem;max-width:46em}
+
+/* ============ 周期切换器（零 JS · CSS radio） ============ */
+/* 隐藏 radio：保留可聚焦可点选（label 关联），opacity:0 连同焦点环一起隐去 */
+.cy-in{
+  position:absolute;width:1px;height:1px;margin:-1px;
+  opacity:0;overflow:hidden;white-space:nowrap;clip-path:inset(50%);
+}
+.cycle{
+  width:max-content;max-width:100%;margin:30px auto 0;
+  display:flex;justify-content:center;gap:6px;flex-wrap:wrap;
+  padding:7px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(180deg,var(--s2),var(--s1));
+  box-shadow:0 1px 2px rgba(20,28,45,.04),0 8px 24px rgba(20,28,45,.05);
+}
+.cycle label{
+  position:relative;cursor:pointer;user-select:none;-webkit-user-select:none;
+  display:inline-flex;align-items:center;
+  font-size:.92rem;font-weight:650;color:var(--ink-2);white-space:nowrap;
+  padding:10px 22px;border-radius:11px;border:1px solid transparent;
+  transition:color .2s,background .2s,border-color .2s,box-shadow .2s;
+}
+.cycle label:hover{color:var(--ink);background:rgba(0,0,0,.045)}
+/* 「1 年」角标：省 XX%（占位） */
+.save{
+  position:absolute;top:-10px;right:-11px;font-style:normal;
+  font-size:.62rem;font-weight:750;letter-spacing:.02em;
+  color:var(--blue-soft);background:rgba(255,255,255,.96);
+  border:1px solid rgba(31,102,184,.4);border-radius:999px;padding:2px 8px;
+  box-shadow:0 2px 6px rgba(31,102,184,.14);
+  transition:color .2s,background .2s,border-color .2s;
+}
+/* 选中态：蓝色实底（白字对比 ≥5.7:1） */
+#cy-1m:checked ~ .cycle label[for="cy-1m"],
+#cy-3m:checked ~ .cycle label[for="cy-3m"],
+#cy-1y:checked ~ .cycle label[for="cy-1y"],
+#cy-lt:checked ~ .cycle label[for="cy-lt"]{
+  color:#fff;background:linear-gradient(135deg,var(--blue-2),var(--blue-deep));
+  box-shadow:0 6px 16px rgba(31,102,184,.3),inset 0 1px 0 rgba(255,255,255,.22);
+}
+#cy-1y:checked ~ .cycle label[for="cy-1y"] .save{
+  color:var(--blue-2);background:#fff;border-color:rgba(31,102,184,.45);
+}
+/* 键盘焦点反馈转移到 label 上 */
+#cy-1m:focus-visible ~ .cycle label[for="cy-1m"],
+#cy-3m:focus-visible ~ .cycle label[for="cy-3m"],
+#cy-1y:focus-visible ~ .cycle label[for="cy-1y"],
+#cy-lt:focus-visible ~ .cycle label[for="cy-lt"]{
+  outline:2px solid var(--blue-2);outline-offset:2px;
+}
+
+/* ============ 三档卡片 ============ */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;align-items:stretch}
+.plan{
+  position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;
+  background:linear-gradient(180deg,var(--s2),var(--s1));padding:28px 26px;
+  box-shadow:0 1px 2px rgba(20,28,45,.04),0 10px 28px rgba(20,28,45,.06);
+  display:flex;flex-direction:column;
+  transition:transform .25s var(--ease),border-color .25s,box-shadow .25s;
+}
+.plan:hover{transform:translateY(-4px);border-color:var(--line-strong);box-shadow:0 18px 40px rgba(20,28,45,.12)}
+.plan--hot{
+  border-color:rgba(31,102,184,.45);
+  background:linear-gradient(180deg,rgba(42,120,214,.07),rgba(42,120,214,.02) 46%,var(--s1));
+  box-shadow:0 14px 36px rgba(31,102,184,.14);
+}
+.plan--hot:hover{border-color:rgba(31,102,184,.7);box-shadow:0 20px 44px rgba(31,102,184,.2)}
+.plan--hot::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 160px at 80% -12%,rgba(42,120,214,.14),transparent 62%);
+}
+.badge{
+  position:absolute;top:15px;right:15px;font-size:.72rem;font-weight:750;
+  background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;
+  padding:4.5px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(31,102,184,.32);
+}
+.tname{font-size:1.12rem;font-weight:760;display:flex;align-items:center;gap:10px;position:relative}
+.tier{
+  font-size:.68rem;font-weight:700;letter-spacing:.08em;color:var(--ink-3);
+  border:1px solid var(--line-strong);border-radius:7px;padding:2px 8px;font-variant-numeric:tabular-nums;
+}
+.plan--hot .tier{color:var(--blue-soft);border-color:rgba(31,102,184,.4)}
+.tdesc{font-size:.8rem;color:var(--ink-3);margin-top:6px;position:relative}
+
+/* 价格区：四组按周期显隐（radio 兄弟选择器联动） */
+.pricebox{margin-top:16px;min-height:96px;position:relative}
+.pg{display:none}
+#cy-1m:checked ~ .plans .pg-1m,
+#cy-3m:checked ~ .plans .pg-3m,
+#cy-1y:checked ~ .plans .pg-1y,
+#cy-lt:checked ~ .plans .pg-lt{display:block;animation:fadeUp .32s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.pline{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pnum{font-size:2.5rem;font-weight:800;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums}
+.plan--hot .pnum{
+  background:linear-gradient(120deg,var(--blue-2),var(--blue-deep));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.pper{font-size:.92rem;font-weight:600;color:var(--ink-3)}
+.pnote{margin-top:7px;font-size:.78rem;color:var(--ink-3);line-height:1.6}
+.pnote b{color:var(--blue-soft);font-weight:700;font-variant-numeric:tabular-nums}
+
+.plan ul{list-style:none;margin-top:16px;flex:1;position:relative}
+.plan li{display:flex;gap:10px;align-items:flex-start;padding:9.5px 0;border-bottom:1px dashed rgba(0,0,0,.1);font-size:.88rem;color:var(--ink-2);line-height:1.55}
+.plan li:last-child{border-bottom:none}
+.plan li .ic{width:16px;height:16px;margin-top:3px;color:var(--ink-3)}
+.plan--hot li .ic{color:var(--blue-2)}
+.plan .btn{margin-top:20px;width:100%;position:relative}
+
+/* ============ 差价升级说明条 ============ */
+.upbar{
+  margin-top:22px;display:flex;align-items:center;gap:16px;
+  border:1px solid rgba(31,102,184,.28);border-radius:var(--r-lg);
+  background:linear-gradient(180deg,rgba(42,120,214,.08),rgba(42,120,214,.04));
+  padding:18px 22px;position:relative;
+}
+.ub-ico{
+  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;
+  color:var(--blue-2);background:rgba(31,102,184,.1);border:1px solid rgba(31,102,184,.3);
+}
+.ub-ico .ic{width:20px;height:20px}
+.upbar p{flex:1;font-size:.92rem;color:var(--ink);line-height:1.7}
+.upbar p b{font-weight:700;color:var(--blue-soft)}
+.upbar .btn{flex:none}
+
+/* ============ 流程三步 ============ */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);list-style:none;margin-top:8px}
+.cell{
+  position:relative;overflow:hidden;
+  border:1px solid var(--line);border-radius:var(--r-xl);
+  background:linear-gradient(180deg,var(--s2),var(--s1));
+  box-shadow:0 1px 2px rgba(20,28,45,.04),0 8px 24px rgba(20,28,45,.05);
+  padding:24px;
+  transition:transform .25s var(--ease),border-color .25s,box-shadow .25s;
+}
+.cell:hover{transform:translateY(-3px);border-color:var(--line-strong);box-shadow:0 4px 10px rgba(20,28,45,.05),0 18px 38px rgba(20,28,45,.10)}
+.ico{
+  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;
+  color:var(--blue-2);background:rgba(31,102,184,.08);
+  border:1px solid rgba(31,102,184,.26);
+  transition:transform .25s var(--ease);
+}
+.cell:hover .ico{transform:scale(1.06) rotate(-3deg)}
+.st-top{display:flex;align-items:center;justify-content:space-between;position:relative}
+.st-no{
+  font-size:.7rem;font-weight:750;letter-spacing:.14em;color:var(--blue-2);
+  border:1px solid rgba(31,102,184,.3);background:rgba(42,120,214,.08);
+  border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums;
+}
+.steps h3{margin-top:15px;font-size:1.02rem;font-weight:730;position:relative}
+.steps p{margin-top:7px;font-size:.875rem;color:var(--ink-2);line-height:1.75;position:relative}
+
+/* ============ footer ============ */
+footer{border-top:1px solid var(--line);padding:30px 0 46px;margin-top:26px}
+.foot-note{
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  font-size:.8rem;color:var(--ink-3);text-align:center;line-height:1.8;
+}
+.foot-note .ic{width:15px;height:15px;color:var(--ink-3)}
+.foot-dl{
+  display:inline-flex;align-items:center;gap:6px;font-weight:650;color:var(--blue-soft);
+  border-bottom:1px solid rgba(31,102,184,.35);padding-bottom:1px;
+  transition:color .2s,border-color .2s;
+}
+.foot-dl:hover{color:var(--blue-2);border-color:var(--blue-2)}
+.foot-dl .ic{width:14px;height:14px}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px;margin-top:22px}
+.foot .brand{font-size:.95rem}
+.foot-line{font-size:.84rem;color:var(--ink-3);margin-left:auto}
+
+/* ============ motion ============ */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@supports (animation-timeline:view()){
+  .plan,.upbar,.steps .cell{
+    animation:rise .55s var(--ease) both;
+    animation-timeline:view();animation-range:entry 0% entry 42%;
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ============ responsive ============ */
+@media (max-width:899px){
+  .plans{grid-template-columns:1fr;max-width:520px}
+  .steps{grid-template-columns:1fr;max-width:520px}
+}
+@media (max-width:639px){
+  .wrap{padding:0 16px}
+  section{padding:54px 0;scroll-margin-top:72px}
+  .phead{padding:52px 0 0}
+  .phead .sub{font-size:.96rem}
+  .cycle{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-radius:18px;padding:8px}
+  .cycle label{justify-content:center;padding:12px 10px;font-size:.9rem;border-radius:12px}
+  .save{top:-8px;right:8px}
+  .plan{padding:24px 20px}
+  .pnum{font-size:2.2rem}
+  .upbar{flex-wrap:wrap}
+  .upbar .btn{width:100%}
+  .foot-line{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ====== 极光层：彩色流动光（内容之下、暖白底之上）====== -->
+<div class="aurora" aria-hidden="true">
+  <i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i><i class="a5"></i>
+</div>
+
+<!-- ====== SVG sprite（内联图标，统一 24 视窗 / 1.7 圆角笔触）====== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="#1f66b8"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="13" y="13" width="8" height="8" rx="2.4" fill="#6357d6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4.2-4.2M12 14l-4.2-4.2"/><path d="M4 16.5v2A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-2"/></symbol>
+  <symbol id="i-android" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 14 0v4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-4Z"/><path d="M8 9.5h.01M16 9.5h.01" stroke-width="2.4"/><path d="M8.5 3.8 10 6M15.5 3.8 14 6M5 13.5H3.5M20.5 13.5H19"/></symbol>
+  <!-- 新增：激活码（钥匙） -->
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="4"/><path d="M9.9 14.1 21 3M15.5 8.5l3 3M12 12l2 2"/></symbol>
+  <!-- 新增：升级（上升箭头） -->
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/></symbol>
+  <!-- 新增：说明（信息） -->
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/></symbol>
+</svg>
+
+<!-- ====== 导航（logo 回主页风格稿；注册登录与主页一致）====== -->
+<nav class="topnav" aria-label="主导航">
+  <div class="wrap nav-in">
+    <a class="brand" href="./bento-light.html" aria-label="返回 BOBO 官网主页">
+      <svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      BOBO<small>AI 助理</small>
+    </a>
+    <!-- 占位：注册/登录入口，正式版为独立页面 -->
+    <a class="btn btn-primary btn-sm nav-cta" href="./login.html">
+      <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>注册登录
+    </a>
+  </div>
+</nav>
+
+<!-- ====== 页头 ====== -->
+<header class="phead">
+  <div class="wrap">
+    <span class="p-eyebrow">Pricing</span>
+    <h1>选择你的<span class="grad">档位</span></h1>
+    <p class="sub">订阅后发放<b>激活码</b>，在 App 内输入即解锁；已订阅低档<b>随时补差价升级</b>。</p>
+  </div>
+</header>
+
+<main>
+<!-- ====== 定价：周期切换 + 三档卡片 + 升级说明 ====== -->
+<section id="pricing" style="padding-top:44px">
+  <div class="wrap">
+
+    <!-- 周期 radio：作为 .wrap 直接子节点置于最前，供下方兄弟选择器联动（零 JS） -->
+    <input class="cy-in" type="radio" name="cycle" id="cy-1m" value="1m">
+    <input class="cy-in" type="radio" name="cycle" id="cy-3m" value="3m">
+    <input class="cy-in" type="radio" name="cycle" id="cy-1y" value="1y" checked>
+    <input class="cy-in" type="radio" name="cycle" id="cy-lt" value="lt">
+
+    <div class="cycle">
+      <label for="cy-1m">1 个月</label>
+      <label for="cy-3m">3 个月</label>
+      <label for="cy-1y">1 年<i class="save" aria-hidden="true">省 XX%</i></label>
+      <label for="cy-lt">终身</label>
+    </div>
+
+    <!-- 价格占位：以下所有 ¥xx / ¥xxx 均为占位数字，正式价格以公告为准 -->
+    <div class="plans">
+
+      <!-- V0 基础版 -->
+      <article class="plan">
+        <div class="tname">基础版<span class="tier">V0</span></div>
+        <p class="tdesc">开箱即用的日常主力</p>
+        <div class="pricebox">
+          <div class="pg pg-1m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">按月支付 · 到期可续订或升级</p>
+          </div>
+          <div class="pg pg-3m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">3 个月一付 · 合计 <b>¥xxx</b></p>
+          </div>
+          <div class="pg pg-1y">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">年付一付 · 合计 <b>¥xxx</b> · <b>立省 XX%</b></p>
+          </div>
+          <div class="pg pg-lt">
+            <div class="pline"><span class="pnum">¥xxx</span><span class="pper">一次性</span></div>
+            <p class="pnote">一次性买断 · 永久有效</p>
+          </div>
+        </div>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>AI 对话·识图·语音</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>实时行情与自选持仓</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>盘中买卖点提醒</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>本地备份与恢复</li>
+        </ul>
+        <!-- 占位：订阅入口 href="#"，正式版指向支付/登录流程 -->
+        <a class="btn btn-ghost btn-sm" href="#">订阅基础版</a>
+      </article>
+
+      <!-- V1 情报版 -->
+      <article class="plan">
+        <div class="tname">情报版<span class="tier">V1</span></div>
+        <p class="tdesc">把博主情报装进口袋</p>
+        <div class="pricebox">
+          <div class="pg pg-1m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">按月支付 · 到期可续订或升级</p>
+          </div>
+          <div class="pg pg-3m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">3 个月一付 · 合计 <b>¥xxx</b></p>
+          </div>
+          <div class="pg pg-1y">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">年付一付 · 合计 <b>¥xxx</b> · <b>立省 XX%</b></p>
+          </div>
+          <div class="pg pg-lt">
+            <div class="pline"><span class="pnum">¥xxx</span><span class="pper">一次性</span></div>
+            <p class="pnote">一次性买断 · 永久有效</p>
+          </div>
+        </div>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>基础版全部功能</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>多平台博主情报</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>定时轮询与提醒</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>专属知识库</li>
+        </ul>
+        <!-- 占位：订阅入口 href="#"，正式版指向支付/登录流程 -->
+        <a class="btn btn-ghost btn-sm" href="#">订阅情报版</a>
+      </article>
+
+      <!-- V2 旗舰版（推荐） -->
+      <article class="plan plan--hot">
+        <span class="badge">推荐</span>
+        <div class="tname">旗舰版<span class="tier">V2</span></div>
+        <p class="tdesc">全能力 · 越用越懂你</p>
+        <div class="pricebox">
+          <div class="pg pg-1m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">按月支付 · 到期可续订或升级</p>
+          </div>
+          <div class="pg pg-3m">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">3 个月一付 · 合计 <b>¥xxx</b></p>
+          </div>
+          <div class="pg pg-1y">
+            <div class="pline"><span class="pnum">¥xx</span><span class="pper">/ 月</span></div>
+            <p class="pnote">年付一付 · 合计 <b>¥xxx</b> · <b>立省 XX%</b></p>
+          </div>
+          <div class="pg pg-lt">
+            <div class="pline"><span class="pnum">¥xxx</span><span class="pper">一次性</span></div>
+            <p class="pnote">一次性买断 · 永久有效</p>
+          </div>
+        </div>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>情报版全部功能</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>每日三档消息面日报</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>AI 深度个股分析</li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>预判回验与错案反哺</li>
+        </ul>
+        <!-- 占位：订阅入口 href="#"，正式版指向支付/登录流程 -->
+        <a class="btn btn-primary btn-sm" href="#">
+          <svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg>订阅旗舰版
+        </a>
+      </article>
+    </div>
+
+    <!-- 差价升级说明条 -->
+    <div class="upbar">
+      <span class="ub-ico"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg></span>
+      <p>已订阅 <b>V0 / V1</b>？升级只补差价——按剩余时长折算，<b>立即生效</b>。</p>
+      <!-- 占位：升级入口 href="#"，正式版指向账号内的升级流程 -->
+      <a class="btn btn-ghost btn-sm" href="#">去升级</a>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 流程三步 ====== -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">How it works</span>
+      <h2>三步开通</h2>
+      <p class="sec-sub">订阅成功后激活码即时发放，在 App 内输入即解锁，无需等待。</p>
+    </div>
+    <ol class="steps">
+      <li class="cell">
+        <div class="st-top">
+          <span class="st-no">STEP 01</span>
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+        </div>
+        <h3>选档订阅</h3>
+        <p>选定档位与支付周期，完成订阅；V0 / V1 / V2 三档随时可补差价上行。</p>
+      </li>
+      <li class="cell">
+        <div class="st-top">
+          <span class="st-no">STEP 02</span>
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg></span>
+        </div>
+        <h3>收到激活码</h3>
+        <p>激活码随订单即时发放，请复制留存；也可稍后在订单页反复查看。</p>
+      </li>
+      <li class="cell">
+        <div class="st-top">
+          <span class="st-no">STEP 03</span>
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-android"/></svg></span>
+        </div>
+        <h3>App 内输入解锁</h3>
+        <p>打开 App 的「激活」页输入激活码，对应档位全功能立即解锁。</p>
+      </li>
+    </ol>
+  </div>
+</section>
+</main>
+
+<!-- ====== 页脚 ====== -->
+<footer>
+  <div class="wrap">
+    <p class="foot-note">
+      <svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>
+      价格与购买渠道以正式公告为准；订阅前请确认已安装 App ——
+      <!-- 占位：./bobo-v1.7.0.apk 为本地占位路径，正式版与主页下载区同源 -->
+      <a class="foot-dl" href="./bobo-v1.7.0.apk"><svg class="ic" aria-hidden="true"><use href="#i-dl"/></svg>下载 App</a>
+    </p>
+    <div class="foot">
+      <span class="brand">
+        <svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg>
+        BOBO AI 助理 · boboai.tech
+      </span>
+      <span class="foot-line">本站由 Cloudflare 全球边缘网络加速 · © 2026</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

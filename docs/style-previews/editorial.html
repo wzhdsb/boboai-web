@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="BOBO AI 助理 — 住进手机里的 AI 助理。看得懂屏幕，读得懂行情，追得上博主。GLM 大模型 × 无障碍 × 数据全本地。">
+<title>BOBO AI 助理 — 住进手机里的 AI 助理</title>
+<style>
+/* ==========================================================
+   BOBO AI 助理 · 极简编辑排版风（Swiss / Minimal Editorial）
+   纸感浅底 · 超大衬线标题 · 网格与细线分区 · 编号系统 · 单强调色
+   ========================================================== */
+
+:root{
+  --paper:      #FAF9F5;
+  --paper-deep: #F1EFE8;
+  --white:      #FFFFFF;
+  --ink:        #191813;
+  --ink-soft:   #55534A;
+  --muted:      #8B877A;
+  --line:       #DEDBD0;
+  --line-ink:   #191813;
+  --accent:     #BE3B21;
+  --accent-ink: #9C2F18;
+
+  --serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --sans:  "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --mono:  ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Courier New", monospace;
+
+  --gutter: clamp(1.25rem, 5vw, 4.5rem);
+  --measure: 74rem;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+::selection{ background:var(--accent); color:var(--paper); }
+
+a{ color:inherit; }
+a:focus-visible, summary:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
+
+.wrap{
+  max-width:var(--measure);
+  margin-inline:auto;
+  padding-inline:var(--gutter);
+}
+
+section{ scroll-margin-top:5.5rem; }
+
+/* ---------- 通用小件 ---------- */
+
+.mono{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.sec-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:1rem;
+  border-bottom:1px solid var(--line-ink);
+  padding-bottom:.9rem;
+}
+.sec-head__no{
+  font-family:var(--mono);
+  font-size:.78rem;
+  letter-spacing:.16em;
+  color:var(--accent);
+  white-space:nowrap;
+}
+.sec-head__label{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(1.6rem, 3.4vw, 2.3rem);
+  line-height:1.15;
+  letter-spacing:.02em;
+  margin:0;
+}
+.sec-head__note{
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+/* 按钮：细线式，无圆角，无阴影 */
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:.6em;
+  border:1px solid var(--line-ink);
+  padding:.85rem 1.7rem;
+  font-family:var(--sans);
+  font-size:.92rem;
+  letter-spacing:.08em;
+  text-decoration:none;
+  color:var(--ink);
+  background:transparent;
+  cursor:pointer;
+  transition:background .25s ease, color .25s ease, border-color .25s ease;
+}
+.btn:hover{ background:var(--ink); color:var(--paper); }
+.btn--solid{ background:var(--ink); color:var(--paper); }
+.btn--solid:hover{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn .arw{ font-family:var(--mono); font-size:.85em; transition:transform .25s ease; }
+.btn:hover .arw--r{ transform:translate(2px,-2px); }
+.btn:hover .arw--d{ transform:translateY(2px); }
+
+.tlink{
+  color:var(--ink);
+  text-decoration:none;
+  border-bottom:1px solid var(--ink);
+  padding-bottom:1px;
+  transition:color .2s ease, border-color .2s ease;
+}
+.tlink:hover{ color:var(--accent); border-color:var(--accent); }
+
+/* ==========================================================
+   导航（吸顶 · 极简细线）
+   ========================================================== */
+
+.nav{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(250,249,245,.92);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-top:4px solid var(--line-ink);
+  border-bottom:1px solid var(--line);
+}
+.nav__inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1.5rem;
+  height:64px;
+}
+.brand{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:1.35rem;
+  letter-spacing:.06em;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:baseline;
+  gap:.55rem;
+}
+.brand__dot{
+  width:.5em; height:.5em;
+  background:var(--accent);
+  display:inline-block;
+  transform:translateY(-.06em);
+}
+.nav__links{
+  display:flex;
+  align-items:center;
+  gap:clamp(1rem, 2.6vw, 2.4rem);
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+.nav__links a{
+  text-decoration:none;
+  color:var(--ink-soft);
+  font-size:.85rem;
+  letter-spacing:.06em;
+  display:inline-flex;
+  align-items:baseline;
+  gap:.45em;
+  transition:color .2s ease;
+}
+.nav__links a .n{
+  font-family:var(--mono);
+  font-size:.68rem;
+  color:var(--muted);
+  transition:color .2s ease;
+}
+.nav__links a:hover{ color:var(--ink); }
+.nav__links a:hover .n{ color:var(--accent); }
+.nav__cta{
+  border:1px solid var(--line-ink);
+  padding:.45rem 1rem;
+  font-size:.8rem;
+  letter-spacing:.08em;
+  text-decoration:none;
+  transition:background .25s ease, color .25s ease;
+}
+.nav__cta:hover{ background:var(--ink); color:var(--paper); }
+
+/* ==========================================================
+   Hero
+   ========================================================== */
+
+.hero{
+  position:relative;
+  padding-block:clamp(4.5rem, 11vw, 9rem) clamp(3.5rem, 8vw, 6.5rem);
+}
+.hero__kicker{
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  color:var(--ink-soft);
+  margin-bottom:clamp(1.8rem, 4vw, 3rem);
+}
+.hero__kicker::before{
+  content:"";
+  width:2.2rem; height:1px;
+  background:var(--accent);
+}
+.hero__title{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(2.85rem, 9.2vw, 7.2rem);
+  line-height:1.08;
+  letter-spacing:.01em;
+  margin:0 0 clamp(1.6rem, 3.5vw, 2.6rem);
+  max-width:14em;
+}
+.hero__title em{
+  font-style:normal;
+  color:var(--accent);
+}
+.hero__sub{
+  font-size:clamp(1.02rem, 2vw, 1.28rem);
+  line-height:1.85;
+  color:var(--ink-soft);
+  max-width:36em;
+  margin:0 0 clamp(2.2rem, 5vw, 3.4rem);
+}
+.hero__cta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:1rem;
+  margin-bottom:clamp(2.8rem, 6vw, 4.5rem);
+}
+.hero__meta{
+  border-top:1px solid var(--line);
+  padding-top:1.1rem;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem 1.4rem;
+  color:var(--muted);
+  font-family:var(--mono);
+  font-size:.78rem;
+  letter-spacing:.06em;
+}
+.hero__side{
+  position:absolute;
+  top:clamp(5rem, 12vw, 9rem);
+  right:var(--gutter);
+  writing-mode:vertical-rl;
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.42em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* ==========================================================
+   功能 · 编辑式编号列表（去卡片，用细线分区）
+   ========================================================== */
+
+.features{
+  padding-block:clamp(4rem, 9vw, 7.5rem);
+}
+.feature{
+  display:grid;
+  grid-template-columns:5rem minmax(0, .9fr) minmax(0, 1.5fr);
+  gap:clamp(1.2rem, 3vw, 3rem);
+  align-items:start;
+  border-top:1px solid var(--line);
+  padding-block:clamp(1.8rem, 3.6vw, 2.7rem);
+}
+.feature:last-child{ border-bottom:1px solid var(--line); }
+.feature__no{
+  font-family:var(--mono);
+  font-size:.85rem;
+  letter-spacing:.1em;
+  color:var(--muted);
+  padding-top:.55rem;
+  transition:color .25s ease;
+}
+.feature__name{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(1.45rem, 2.8vw, 1.95rem);
+  line-height:1.3;
+  margin:0;
+  transition:transform .3s ease;
+}
+.feature__tag{
+  display:block;
+  margin-top:.5rem;
+  color:var(--muted);
+}
+.feature__desc{
+  margin:0;
+  color:var(--ink-soft);
+  font-size:.98rem;
+  line-height:1.85;
+}
+.feature:hover .feature__no{ color:var(--accent); }
+.feature:hover .feature__name{ transform:translateX(6px); }
+
+/* ==========================================================
+   三档等级 · 纵向细线分栏（推荐档用排版强调）
+   ========================================================== */
+
+.tiers{
+  padding-block:clamp(4rem, 9vw, 7.5rem);
+  background:var(--paper-deep);
+}
+.tiers .sec-head{ margin-bottom:0; }
+.tiers__grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  border-bottom:1px solid var(--line);
+}
+.tier{
+  padding:clamp(2rem, 4vw, 3rem) clamp(1.4rem, 2.6vw, 2.4rem) clamp(2.2rem, 4vw, 3rem);
+  border-left:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+}
+.tier:first-child{ border-left:0; }
+.tier__code{
+  font-family:var(--mono);
+  font-size:.75rem;
+  letter-spacing:.18em;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:.9rem;
+}
+.tier__badge{
+  color:var(--accent);
+  display:inline-flex;
+  align-items:center;
+  gap:.45em;
+}
+.tier__badge::before{
+  content:"";
+  width:.55em; height:.55em;
+  background:var(--accent);
+}
+.tier__name{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(1.5rem, 3vw, 2rem);
+  line-height:1.25;
+  margin:1.1rem 0 0;
+}
+.tier--rec .tier__name{
+  font-size:clamp(1.9rem, 4vw, 2.8rem);
+  color:var(--ink);
+}
+.tier__list{
+  list-style:none;
+  margin:1.6rem 0 2.2rem;
+  padding:0;
+  flex:1;
+}
+.tier__list li{
+  border-top:1px solid var(--line);
+  padding:.75rem 0 .75rem 1.3rem;
+  position:relative;
+  font-size:.93rem;
+  color:var(--ink-soft);
+  line-height:1.65;
+}
+.tier__list li::before{
+  content:"—";
+  position:absolute;
+  left:0;
+  color:var(--muted);
+}
+.tier--rec .tier__list li::before{ color:var(--accent); }
+.tier--rec{
+  background:var(--white);
+  border-top:3px solid var(--accent);
+}
+.tier__act{ margin-top:auto; }
+.tier__act .tlink{ font-size:.88rem; }
+
+/* ==========================================================
+   下载
+   ========================================================== */
+
+.download{
+  padding-block:clamp(4rem, 9vw, 7.5rem);
+}
+.dl__grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1.15fr) minmax(0, .85fr);
+  gap:clamp(2rem, 5vw, 5rem);
+  margin-top:clamp(2.5rem, 5vw, 4rem);
+}
+.dl__version{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(3rem, 8vw, 5.6rem);
+  line-height:1.05;
+  margin:0 0 .8rem;
+}
+.dl__version small{
+  display:block;
+  font-family:var(--mono);
+  font-weight:400;
+  font-size:.78rem;
+  letter-spacing:.16em;
+  color:var(--muted);
+  margin-top:1.1rem;
+}
+.dl__note{
+  color:var(--ink-soft);
+  max-width:26em;
+  margin:0 0 2rem;
+}
+.mirror{
+  border-top:1px solid var(--line);
+  padding-top:1.6rem;
+}
+.mirror__label{
+  color:var(--accent);
+  margin-bottom:1rem;
+  display:block;
+}
+.mirror p{
+  margin:0 0 1.2rem;
+  color:var(--ink-soft);
+  font-size:.95rem;
+}
+.mirror code{
+  font-family:var(--mono);
+  font-size:.85em;
+  background:var(--paper-deep);
+  border:1px solid var(--line);
+  padding:.3em .6em;
+  word-break:break-all;
+}
+
+/* ==========================================================
+   FAQ · details/summary 细线折叠
+   ========================================================== */
+
+.faq{
+  padding-block:clamp(4rem, 9vw, 7.5rem);
+  background:var(--paper-deep);
+}
+.faq__list{ margin-top:0; }
+.faq__list details{ border-bottom:1px solid var(--line); }
+.faq__list details:first-child{ border-top:1px solid var(--line); }
+.faq__list summary{
+  list-style:none;
+  display:flex;
+  align-items:baseline;
+  gap:clamp(.9rem, 2.5vw, 2rem);
+  padding:1.35rem .2rem;
+  cursor:pointer;
+  transition:color .2s ease;
+}
+.faq__list summary::-webkit-details-marker{ display:none; }
+.faq__no{
+  font-family:var(--mono);
+  font-size:.78rem;
+  color:var(--muted);
+  min-width:2.2rem;
+  transition:color .2s ease;
+}
+.faq__q{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(1.05rem, 2.2vw, 1.3rem);
+  line-height:1.5;
+  flex:1;
+}
+.faq__tick{
+  font-family:var(--mono);
+  font-size:1.35rem;
+  line-height:1;
+  color:var(--muted);
+  transition:transform .3s ease, color .3s ease;
+  align-self:center;
+}
+details[open] .faq__tick{ transform:rotate(45deg); color:var(--accent); }
+details[open] .faq__no{ color:var(--accent); }
+.faq__a{
+  margin:0;
+  padding:0 .2rem 1.7rem calc(2.2rem + clamp(.9rem, 2.5vw, 2rem));
+  color:var(--ink-soft);
+  max-width:44em;
+  font-size:.96rem;
+}
+
+/* ==========================================================
+   页脚
+   ========================================================== */
+
+.footer{
+  border-top:1px solid var(--line-ink);
+  padding-block:2rem;
+}
+.footer__inner{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:.6rem 2rem;
+  color:var(--muted);
+  font-size:.8rem;
+  letter-spacing:.05em;
+}
+.footer__inner p{ margin:0; }
+.footer a{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-decoration:none;
+  color:var(--ink-soft);
+  transition:color .2s ease;
+}
+.footer a:hover{ color:var(--accent); }
+
+/* ==========================================================
+   响应式
+   ========================================================== */
+
+@media (max-width: 1080px){
+  .hero__side{ display:none; }
+}
+
+@media (max-width: 900px){
+  .dl__grid{ grid-template-columns:1fr; }
+  .tiers__grid{ grid-template-columns:1fr; }
+  .tier{ border-left:0; border-top:1px solid var(--line); }
+}
+
+@media (max-width: 720px){
+  .nav__cta{ display:none; }
+  .nav__links a .n{ display:none; }
+  .nav__links{ gap:1.1rem; }
+  .feature{
+    grid-template-columns:3rem 1fr;
+    grid-template-areas:"no name" "no desc";
+  }
+  .feature__no{ grid-area:no; padding-top:.45rem; }
+  .feature__name{ grid-area:name; }
+  .feature__desc{ grid-area:desc; margin-top:.3rem; }
+  .sec-head__note{ display:none; }
+  .faq__a{ padding-left:0; }
+  .hero__meta{ gap:.3rem .9rem; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{ transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 导航 ================= -->
+<header class="nav">
+  <div class="wrap nav__inner">
+    <a class="brand" href="#top"><span class="brand__dot" aria-hidden="true"></span>BOBO</a>
+    <nav aria-label="页面导航">
+      <ul class="nav__links">
+        <li><a href="#features"><span class="n">01</span>功能</a></li>
+        <li><a href="#tiers"><span class="n">02</span>版本</a></li>
+        <li><a href="#download"><span class="n">03</span>下载</a></li>
+        <li><a href="#faq"><span class="n">04</span>FAQ</a></li>
+      </ul>
+    </nav>
+    <a class="nav__cta" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">下载 ↗</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= Hero ================= -->
+  <section class="hero wrap">
+    <p class="hero__kicker mono">BOBO AI 助理 · 安卓端 AI 助理 App</p>
+    <h1 class="hero__title">住进手机里的<br><em>AI 助理</em></h1>
+    <p class="hero__sub">看得懂屏幕，读得懂行情，追得上博主。GLM 大模型 × 无障碍 × 数据全本地。</p>
+    <div class="hero__cta">
+      <a class="btn btn--solid" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">立即下载 <span class="arw arw--r">↗</span></a>
+      <a class="btn" href="#features">了解功能 <span class="arw arw--d">↓</span></a>
+    </div>
+    <p class="hero__meta">
+      <span>Android 11+</span>
+      <span>·</span>
+      <span>约 17MB</span>
+      <span>·</span>
+      <span>新用户 7 天全功能试用</span>
+    </p>
+    <span class="hero__side" aria-hidden="true">BOBO AI ASSISTANT — ANDROID</span>
+  </section>
+
+  <!-- ================= 功能 ================= -->
+  <section class="features wrap" id="features">
+    <div class="sec-head">
+      <h2 class="sec-head__label">功能</h2>
+      <span class="sec-head__no">01 — 06</span>
+      <span class="sec-head__note mono">BOBO AI 助理</span>
+    </div>
+
+    <article class="feature">
+      <span class="feature__no">01</span>
+      <h3 class="feature__name">AI 对话<span class="feature__tag mono">Chat</span></h3>
+      <p class="feature__desc">GLM 大模型直连：语音输入、拍照识图、多会话管理。快速应答模式约三倍提速，深度思考进度实时可见。</p>
+    </article>
+
+    <article class="feature">
+      <span class="feature__no">02</span>
+      <h3 class="feature__name">实时行情<span class="feature__tag mono">Market</span></h3>
+      <p class="feature__desc">A股 + 美股：指数分时、个股 K 线、筹码峰，盘中秒级刷新；自选与持仓一处管理。</p>
+    </article>
+
+    <article class="feature">
+      <span class="feature__no">03</span>
+      <h3 class="feature__name">AI 个股分析<span class="feature__tag mono">Research</span></h3>
+      <p class="feature__desc">深度研究模式：多轮推演、消息面联动、结论前置的个股体检报告，思考与开销全程透明。</p>
+    </article>
+
+    <article class="feature">
+      <span class="feature__no">04</span>
+      <h3 class="feature__name">盘中提醒<span class="feature__tag mono">Alert</span></h3>
+      <p class="feature__desc">买卖点条件触发，高优通知横幅 + 响铃，后台保活不漏单；预判贴合自动回验，越用越准。</p>
+    </article>
+
+    <article class="feature">
+      <span class="feature__no">05</span>
+      <h3 class="feature__name">消息面日报<span class="feature__tag mono">Daily</span></h3>
+      <p class="feature__desc">每日三档（盘前 / 午间 / 盘后）AI 日报：快讯映射板块、传闻雷达、明日看点，积攒你的盘感。</p>
+    </article>
+
+    <article class="feature">
+      <span class="feature__no">06</span>
+      <h3 class="feature__name">博主情报<span class="feature__tag mono">Feed</span></h3>
+      <p class="feature__desc">微博 / B站 / 小红书 / 抖音博主动态定时抓取，AI 总结历史脉络，沉淀为可检索的专属知识库。</p>
+    </article>
+  </section>
+
+  <!-- ================= 三档等级 ================= -->
+  <section class="tiers" id="tiers">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-head__label">版本</h2>
+        <span class="sec-head__no">V0 · V1 · V2</span>
+        <span class="sec-head__note mono">三档等级</span>
+      </div>
+
+      <div class="tiers__grid">
+        <div class="tier">
+          <p class="tier__code mono">V0 — Basic</p>
+          <h3 class="tier__name">基础版</h3>
+          <ul class="tier__list">
+            <li>AI 对话·识图·语音</li>
+            <li>实时行情与自选持仓</li>
+            <li>盘中买卖点提醒</li>
+            <li>本地备份与恢复</li>
+          </ul>
+          <p class="tier__act"><a class="tlink" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">下载基础版 ↗</a></p>
+        </div>
+
+        <div class="tier">
+          <p class="tier__code mono">V1 — Intel</p>
+          <h3 class="tier__name">情报版</h3>
+          <ul class="tier__list">
+            <li>基础版全部功能</li>
+            <li>多平台博主情报</li>
+            <li>定时轮询和提醒</li>
+            <li>专属知识库</li>
+          </ul>
+          <p class="tier__act"><a class="tlink" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">下载情报版 ↗</a></p>
+        </div>
+
+        <div class="tier tier--rec">
+          <p class="tier__code mono">V2 — Flagship<span class="tier__badge">推荐</span></p>
+          <h3 class="tier__name">旗舰版</h3>
+          <ul class="tier__list">
+            <li>情报版全部功能</li>
+            <li>每日三档消息面日报</li>
+            <li>AI 深度个股分析</li>
+            <li>预判回验与错案反哺</li>
+          </ul>
+          <p class="tier__act"><a class="btn btn--solid" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">下载旗舰版 <span class="arw arw--r">↗</span></a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 下载 ================= -->
+  <section class="download wrap" id="download">
+    <div class="sec-head">
+      <h2 class="sec-head__label">下载</h2>
+      <span class="sec-head__no">GitHub Releases</span>
+      <span class="sec-head__note mono">主渠道</span>
+    </div>
+
+    <div class="dl__grid">
+      <div>
+        <p class="dl__version">v1.7.0<small>versionCode 18</small></p>
+        <p class="dl__note">App 内置应用内更新，之后不必再手动下载。</p>
+        <a class="btn btn--solid" href="https://github.com/wzhdsb/mobile-ai-assistant-releases/releases/latest" target="_blank" rel="noopener noreferrer">前往 GitHub Releases 下载 <span class="arw arw--r">↗</span></a>
+      </div>
+      <div class="mirror">
+        <span class="mirror__label mono">国内网络加速</span>
+        <p>国内网络可在 App「检查更新 → ⚙ 配置」里填镜像前缀 <code>https://ghfast.top/</code> 加速。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-head__label">常见问题</h2>
+        <span class="sec-head__no">FAQ 01 — 05</span>
+        <span class="sec-head__note mono">BOBO AI 助理</span>
+      </div>
+
+      <div class="faq__list">
+        <details>
+          <summary>
+            <span class="faq__no">Q.01</span>
+            <span class="faq__q">需要什么配置的手机？</span>
+            <span class="faq__tick" aria-hidden="true">+</span>
+          </summary>
+          <p class="faq__a">Android 11（API 30）及以上，无需 root。安装包约 17MB，建议 6GB 以上内存的机型以获得流畅的后台体验。</p>
+        </details>
+
+        <details>
+          <summary>
+            <span class="faq__no">Q.02</span>
+            <span class="faq__q">免费试用怎么算？</span>
+            <span class="faq__tick" aria-hidden="true">+</span>
+          </summary>
+          <p class="faq__a">首次启动起 7 天全功能试用，无需注册账号。到期后输入激活码解锁，换机可自助换绑设备。</p>
+        </details>
+
+        <details>
+          <summary>
+            <span class="faq__no">Q.03</span>
+            <span class="faq__q">我的数据存在哪里？</span>
+            <span class="faq__tick" aria-hidden="true">+</span>
+          </summary>
+          <p class="faq__a">聊天、自选、持仓、知识库全部本地存储，支持口令加密的一键备份导出；不经任何第三方服务器。</p>
+        </details>
+
+        <details>
+          <summary>
+            <span class="faq__no">Q.04</span>
+            <span class="faq__q">AI 能力需要自己提供 Key 吗？</span>
+            <span class="faq__tick" aria-hidden="true">+</span>
+          </summary>
+          <p class="faq__a">是。对话与分析使用你自己的智谱 API Key，额度与花销自己掌控，App 内透明记账，不经过中间商。</p>
+        </details>
+
+        <details>
+          <summary>
+            <span class="faq__no">Q.05</span>
+            <span class="faq__q">激活后能离线用吗？</span>
+            <span class="faq__tick" aria-hidden="true">+</span>
+          </summary>
+          <p class="faq__a">能。激活票据本地 Ed25519 验签，离线可用；联网时每 24 小时自动静默续签，无需反复输码。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= 页脚 ================= -->
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <p>BOBO AI 助理 · boboai.tech · 本站由 Cloudflare 全球边缘网络加速 · © 2026</p>
+    <a href="#top">TOP ↑</a>
+  </div>
+</footer>
+
+</body>
+</html>

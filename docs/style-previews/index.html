@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOBO 官网风格对比 · 5 选 1</title>
+<style>
+  :root {
+    --bg: #0e0f13;
+    --card: #15171d;
+    --border: rgba(255, 255, 255, 0.09);
+    --text: #e8eaf0;
+    --dim: #9aa0ae;
+    --faint: #62676f;
+    --accent: #8b9dff;
+    --radius: 16px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.7; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 48px 0 8px; }
+  .kicker { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.3em; color: var(--accent); font-weight: 600; }
+  h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; margin: 10px 0 8px; }
+  .sub { color: var(--dim); font-size: 15px; max-width: 760px; }
+  .sub code { font-family: var(--mono); font-size: 13px; background: rgba(255,255,255,.06); border: 1px solid var(--border); padding: 1px 7px; border-radius: 6px; }
+
+  .list { display: grid; gap: 34px; margin: 40px 0 60px; }
+  .item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .item:hover { border-color: rgba(139, 157, 255, 0.4); }
+
+  .shot { position: relative; height: 430px; overflow: hidden; background: #000; cursor: pointer; }
+  .shot iframe {
+    width: 1440px; height: 900px;
+    border: 0; position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%) scale(0.79);
+    transform-origin: top center;
+    pointer-events: none;
+  }
+  .shot .veil {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 82%, rgba(21, 23, 29, 0.9));
+    display: flex; align-items: flex-end; justify-content: flex-end; padding: 14px 18px;
+  }
+  .shot .open {
+    font-size: 13.5px; font-weight: 600; color: #fff;
+    background: linear-gradient(135deg, #4a63e8, #6f86ff);
+    padding: 8px 18px; border-radius: 9px; text-decoration: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  }
+
+  .info { display: flex; gap: 28px; padding: 22px 26px 24px; align-items: flex-start; flex-wrap: wrap; }
+  .num { font-family: var(--mono); font-size: 13px; color: var(--faint); padding-top: 6px; min-width: 30px; }
+  .body { flex: 1; min-width: 260px; }
+  .name { font-size: 19px; font-weight: 700; }
+  .name small { font-size: 13px; font-weight: 500; color: var(--faint); margin-left: 8px; letter-spacing: 0.04em; }
+  .desc { color: var(--dim); font-size: 14.5px; margin-top: 6px; max-width: 640px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip {
+    font-size: 12.5px; color: var(--dim);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 3px 12px; background: rgba(255, 255, 255, 0.03);
+  }
+
+  footer { border-top: 1px solid var(--border); padding: 26px 0 46px; color: var(--faint); font-size: 13px; }
+
+  .sub-h { font-size: 20px; font-weight: 700; margin: 0 0 16px; }
+  .sub-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0 0 60px; }
+  .sub-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+    text-decoration: none; transition: border-color 0.2s;
+  }
+  .sub-card:hover { border-color: rgba(139, 157, 255, 0.4); }
+  .sub-card b { display: block; font-size: 16px; color: var(--text); margin-bottom: 5px; }
+  .sub-card small { font-size: 12px; color: var(--accent); font-family: var(--mono); letter-spacing: 0.06em; }
+  .sub-card span { display: block; font-size: 13px; color: var(--dim); line-height: 1.65; margin-top: 6px; }
+
+  @media (max-width: 720px) {
+    .shot { height: 300px; }
+    .shot iframe { transform: translateX(-50%) scale(0.25); height: 1200px; }
+    .info { gap: 14px; }
+    .num { display: none; }
+    .sub-list { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <p class="kicker">BOBO AI 助理 · 官网风格擂台</p>
+    <h1>五种风格，同一套内容，挑一个你最喜欢的</h1>
+    <p class="sub">
+      五个页面使用完全相同的功能文案、三档等级与 FAQ，唯一变量是视觉风格。
+      下方每张卡片内嵌了实时预览（缩放渲染，不截断）；<b>点击预览区或"打开完整页"查看原尺寸效果</b>。
+      若预览空白（个别浏览器限制本地 iframe），直接点按钮打开对应 <code>.html</code> 文件即可。
+    </p>
+  </header>
+
+  <div class="list">
+
+    <div class="item">
+      <a class="shot" href="dark-tech.html">
+        <iframe src="dark-tech.html" loading="lazy" title="暗色科技风预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">01</span>
+        <div class="body">
+          <p class="name">暗色科技风 <small>Dark Tech · Linear / Vercel 系</small></p>
+          <p class="desc">与现官网同流派的高配版：近黑分层底 + 径向光晕 + 全页噪点，紫→青渐变文字，玻璃吸顶导航，行情跑马灯，纯 CSS 手机模型（AI 对话 + 个股卡 + 提醒横幅动画）。</p>
+          <div class="chips"><span class="chip">近黑底 + 紫青强调</span><span class="chip">噪点 + 光晕</span><span class="chip">玻璃吸顶</span><span class="chip">微交互全家桶</span><span class="chip">手机 mockup</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <a class="shot" href="bento.html">
+        <iframe src="bento.html" loading="lazy" title="Bento 网格风预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">02</span>
+        <div class="body">
+          <p class="name">Bento 便当盒网格 <small>Bento Grid · Apple 发布会风</small></p>
+          <p class="desc">12 列网格大小格混排拼贴：AI 对话占大格内嵌聊天 mock，行情格有分时折线与筹码峰，行尾 6 枚数据小格（17MB / 7 天试用 / v1.7.0…）。六个功能各自独立强调色与材质，滚动触发描线动画。</p>
+          <div class="chips"><span class="chip">12 列拼贴</span><span class="chip">每格独立色</span><span class="chip">内嵌行情 mock</span><span class="chip">滚动描线动画</span><span class="chip">数据小格</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <a class="shot" href="bento-light.html">
+        <iframe src="bento-light.html" loading="lazy" title="Bento 浅色版预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">02+</span>
+        <div class="body">
+          <p class="name">Bento 浅色版 <small>Bento Grid Light · 应"背景太黑"反馈定制</small></p>
+          <p class="desc">与 02 完全相同的拼贴结构与文案，换成暖白纸感底（#f7f6f3）+ 白色格子 + 柔和双层投影；六格强调色重校为白底可读的深色系并配 5–9% 淡彩底。红涨绿跌、对比度全部按无障碍标准重新校验。</p>
+          <div class="chips"><span class="chip">暖白纸感底</span><span class="chip">白格 + 柔影</span><span class="chip">六色重校</span><span class="chip">结构与 02 一致</span><span class="chip">无障碍达标</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <a class="shot" href="aurora-glass.html">
+        <iframe src="aurora-glass.html" loading="lazy" title="玻璃拟态极光风预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">03</span>
+        <div class="body">
+          <p class="name">玻璃拟态 × 极光渐变 <small>Glassmorphism · Liquid Glass 2026</small></p>
+          <p class="desc">深空底上五个极光色斑（紫/青/粉/翠/靛）持续流动，卡片是磨砂玻璃（blur + 提饱和 + 内高光），hover 时极光彩影、光带扫过，推荐档带持续旋转的极光描边——2026 最热的"液态玻璃"方向。</p>
+          <div class="chips"><span class="chip">5 色流动极光</span><span class="chip">磨砂玻璃卡</span><span class="chip">旋转极光描边</span><span class="chip">光带扫过</span><span class="chip">玻璃手机模型</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <a class="shot" href="editorial.html">
+        <iframe src="editorial.html" loading="lazy" title="极简编辑排版风预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">04</span>
+        <div class="body">
+          <p class="name">极简编辑排版 <small>Minimal Editorial · Swiss 风</small></p>
+          <p class="desc">唯一浅色方案：暖白纸感底大留白，衬线超大标题，hairline 细线分区替代卡片盒，编号系统（01–06）贯穿全站，全文只用一个朱红强调色。安静、高级、耐看。</p>
+          <div class="chips"><span class="chip">暖白大留白</span><span class="chip">衬线大标题</span><span class="chip">细线分区零卡片</span><span class="chip">编号系统</span><span class="chip">单强调色</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <a class="shot" href="brutalism.html">
+        <iframe src="brutalism.html" loading="lazy" title="新粗野主义风预览"></iframe>
+        <span class="veil"><span class="open">打开完整页 →</span></span>
+      </a>
+      <div class="info">
+        <span class="num">05</span>
+        <div class="body">
+          <p class="name">新粗野主义 <small>Neo-Brutalism · 反精致</small></p>
+          <p class="desc">奶油纸底 + 黄/粉/柠檬绿/亮蓝撞色，3px 粗黑边框 + 无模糊硬投影，900 字重大标题、贴纸式旋转元素、双条跑马灯，还有纯 CSS 手机模型（聊天气泡打字动画 + K 线）。个性最强、最有记忆点。</p>
+          <div class="chips"><span class="chip">撞色 + 粗黑边</span><span class="chip">硬投影</span><span class="chip">贴纸元素</span><span class="chip">跑马灯</span><span class="chip">个性最强</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2 class="sub-h">子页风格稿 · 延续 02+ 浅色 Bento</h2>
+  <div class="sub-list">
+    <a class="sub-card" href="login.html">
+      <small>LOGIN</small>
+      <b>登录 / 注册页</b>
+      <span>零 JS 双 tab 切换：登录↔注册、短信验证码↔邮箱密码；条款勾选与隐私说明。导航右上角「注册登录」即指向此页。</span>
+    </a>
+    <a class="sub-card" href="pricing.html">
+      <small>PRICING</small>
+      <b>订阅定价页</b>
+      <span>1 月 / 3 月 / 1 年 / 终身周期切换，三档价格联动（价格占位）；差价升级说明条 + 「订阅 → 激活码 → App 输入」三步流程。主页三张等级卡按钮即指向此页。</span>
+    </a>
+    <a class="sub-card" href="account.html">
+      <small>ACCOUNT</small>
+      <b>用户中心</b>
+      <span>左栏导航（账户信息 / 我的订阅 / 激活码记录 / 下载 App / 退出）；订阅状态卡：剩余天数进度条、补差价升级 V2、续费（数据占位）。</span>
+    </a>
+  </div>
+
+  <footer>
+    页面均为自包含单文件（零 JS · 零外部资源 · 双击即开）。01–05 由 5 个并行 agent 各自调研对应风格后制作；02+ 为应用户反馈（背景太黑）追加的浅色变体，并陆续加入流动极光、新下载模块与订阅体系；3 个子页延续 02+ 风格制作 · 2026-08-29
+  </footer>
+</div>
+</body>
+</html>

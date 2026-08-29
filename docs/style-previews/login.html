@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f6f3">
+<title>登录 · 注册 — BOBO AI 助理</title>
+<meta name="description" content="BOBO AI 助理账号：登录或创建账号，注册即送 7 天 App 全功能试用。下载 App 后用同一账号激活，数据仍全部本地存储。">
+<style>
+/* ============ tokens（与 bento-light.html 同源）============ */
+:root{
+  --bg:#f7f6f3;
+  --s1:#ffffff; --s2:#fbfaf7; --s3:#f3f1ec;
+  --ink:#1a1a19; --ink-2:#52514e; --ink-3:#6f6d66;
+  --line:rgba(0,0,0,.08); --line-strong:rgba(0,0,0,.16);
+  --grid:rgba(0,0,0,.07);
+  --blue:#2a78d6; --blue-2:#1f66b8; --blue-deep:#184f95; --blue-soft:#1c5cab;
+  --red:#d03b3b; --green:#0a810a; --aqua:#199e70;
+  --violet:#6357d6; --orange:#bc4a10; --yellow:#6f4c00; --magenta:#b23a68;
+  --r-xl:26px; --r-lg:20px; --r-md:16px; --r-sm:12px;
+  --gap:14px;
+  --font:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --ease:cubic-bezier(.22,.7,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--ink);
+  line-height:1.6;overflow-x:hidden;
+  display:flex;flex-direction:column;min-height:100vh;
+}
+/* 暖白底上的定光（比主页再收一档，登录页更安静） */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(720px 420px at 12% -6%,rgba(42,120,214,.05),transparent 62%),
+    radial-gradient(640px 380px at 96% 4%,rgba(99,87,214,.04),transparent 60%),
+    radial-gradient(900px 600px at 50% 118%,rgba(42,120,214,.035),transparent 60%);
+}
+/* ============ aurora（极光层 · 透明度比主页低调一档）============ */
+.aurora{
+  position:absolute;top:0;left:0;right:0;height:130vh;z-index:-1;
+  overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 38%,rgba(0,0,0,.5) 66%,transparent 94%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 38%,rgba(0,0,0,.5) 66%,transparent 94%);
+}
+.aurora i{position:absolute;display:block;border-radius:50%}
+.aurora .a1{
+  width:60vmax;height:60vmax;left:-14vmax;top:-20vmax;
+  background:radial-gradient(closest-side,rgba(42,120,214,.17),rgba(42,120,214,.07) 46%,transparent 72%);
+  animation:au1 36s ease-in-out -4s infinite alternate;
+}
+.aurora .a2{
+  width:54vmax;height:54vmax;right:-16vmax;top:-14vmax;
+  background:radial-gradient(closest-side,rgba(99,87,214,.15),rgba(99,87,214,.06) 46%,transparent 72%);
+  animation:au2 30s ease-in-out -13s infinite alternate;
+}
+.aurora .a3{
+  width:48vmax;height:48vmax;left:30vw;top:2vh;
+  background:radial-gradient(closest-side,rgba(25,158,112,.11),rgba(25,158,112,.04) 45%,transparent 72%);
+  animation:au3 42s ease-in-out -22s infinite alternate;
+}
+.aurora .a4{
+  width:42vmax;height:42vmax;left:-10vmax;top:48vh;
+  background:radial-gradient(closest-side,rgba(178,58,104,.10),rgba(178,58,104,.04) 45%,transparent 72%);
+  animation:au4 26s ease-in-out -9s infinite alternate;
+}
+.aurora .a5{
+  width:50vmax;height:50vmax;right:-8vmax;top:58vh;
+  background:radial-gradient(closest-side,rgba(31,102,184,.13),rgba(31,102,184,.05) 46%,transparent 72%);
+  animation:au5 33s ease-in-out -17s infinite alternate;
+}
+@keyframes au1{from{transform:translate(0,0) scale(1) rotate(0deg)}to{transform:translate(9vmax,5vmax) scale(1.12) rotate(8deg)}}
+@keyframes au2{from{transform:translate(0,0) scale(1.06) rotate(0deg)}to{transform:translate(-8vmax,6vmax) scale(.94) rotate(-7deg)}}
+@keyframes au3{from{transform:translate(0,0) scale(.92);opacity:.85}to{transform:translate(-6vmax,7vmax) scale(1.1);opacity:1}}
+@keyframes au4{from{transform:translate(0,0) scale(1) rotate(0deg)}to{transform:translate(12vmax,-9vmax) scale(1.15) rotate(6deg)}}
+@keyframes au5{from{transform:translate(0,0) scale(1.05);opacity:.9}to{transform:translate(-10vmax,-6vmax) scale(.95);opacity:1}}
+@media (max-width:639px){
+  .aurora{height:110vh}
+  .aurora .a2{right:-22vmax}
+  .aurora .a3{left:6vw}
+}
+::selection{background:rgba(42,120,214,.22);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--blue-2);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1150px;margin:0 auto;padding:0 22px;width:100%}
+.ic{width:22px;height:22px;flex:none}
+/* 视觉隐藏但可聚焦（radio 承载键盘操作，焦点环转投到对应 label） */
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ============ nav（极简：logo + 返回首页）============ */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(247,246,243,.82);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  animation:dropIn .5s var(--ease) both;
+}
+@keyframes dropIn{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+.nav-in{display:flex;align-items:center;gap:26px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+.brand .logo{width:26px;height:26px}
+.brand small{font-weight:500;color:var(--ink-3);font-size:.78rem;margin-left:2px;letter-spacing:.04em}
+.nav-back{
+  margin-left:auto;display:inline-flex;align-items:center;gap:7px;
+  font-size:.88rem;color:var(--ink-2);padding:8px 13px;border-radius:10px;
+  transition:color .2s,background .2s;
+}
+.nav-back:hover{color:var(--ink);background:rgba(0,0,0,.045)}
+.nav-back .ic{width:16px;height:16px}
+
+/* ============ buttons（与主页同语言）============ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-weight:650;font-size:.95rem;border-radius:14px;padding:13px 24px;
+  border:1px solid transparent;cursor:pointer;white-space:nowrap;
+  font-family:inherit;
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),background .22s,border-color .22s;
+}
+.btn .ic{width:18px;height:18px}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;
+  box-shadow:0 8px 20px rgba(31,102,184,.26),inset 0 1px 0 rgba(255,255,255,.28);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(31,102,184,.34),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-block{width:100%}
+
+/* ============ 主体布局：居中单卡 ============ */
+.auth{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:52px 20px 60px;position:relative;
+}
+
+/* 卡片：主页 cell 同款材质（渐变白 + 细边 + 双层投影），叠一层淡蓝顶光 */
+.auth-card{
+  position:relative;width:min(452px,100%);
+  border:1px solid var(--line);border-radius:var(--r-xl);
+  background:linear-gradient(180deg,var(--s2),var(--s1));
+  box-shadow:0 1px 2px rgba(20,28,45,.04),0 14px 40px rgba(20,28,45,.08);
+  padding:28px 30px 26px;
+  animation:rise .6s var(--ease) both;
+}
+.auth-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(340px 130px at 86% -12%,rgba(42,120,214,.08),transparent 62%);
+}
+
+/* 登录 / 注册 分段 tab（radio 驱动，滑块随选中移动） */
+.tabs{
+  position:relative;display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  padding:4px;margin-bottom:22px;
+  background:var(--s3);border:1px solid var(--line);border-radius:13px;
+}
+.tabs label{
+  position:relative;z-index:1;text-align:center;padding:9px 0;
+  font-size:.92rem;font-weight:650;color:var(--ink-2);cursor:pointer;
+  border-radius:9px;transition:color .25s;
+}
+.tabs .slider{
+  position:absolute;z-index:0;top:4px;left:4px;bottom:4px;width:calc(50% - 6px);
+  background:#fff;border:1px solid rgba(31,102,184,.3);border-radius:9px;
+  box-shadow:0 2px 8px rgba(20,28,45,.1);
+  transition:transform .32s var(--ease);
+}
+#m-login:checked ~ .auth-card .tabs label[for="m-login"],
+#m-reg:checked ~ .auth-card .tabs label[for="m-reg"]{color:var(--blue-2)}
+#m-reg:checked ~ .auth-card .tabs .slider{transform:translateX(calc(100% + 4px))}
+#m-login:focus-visible ~ .auth-card .tabs label[for="m-login"],
+#m-reg:focus-visible ~ .auth-card .tabs label[for="m-reg"]{outline:2px solid var(--blue-2);outline-offset:2px}
+
+/* 标题区（随 tab 切换文案） */
+.auth-ico{
+  position:relative;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  margin-bottom:14px;background:rgba(42,120,214,.08);border:1px solid rgba(31,102,184,.26);
+}
+.auth-ico .ic{width:24px;height:24px}
+.auth-head{position:relative;margin-bottom:20px}
+.auth-head .head{display:none}
+#m-login:checked ~ .auth-card .head-login,
+#m-reg:checked ~ .auth-card .head-reg{display:block;animation:paneIn .3s var(--ease)}
+.auth-head h1{font-size:1.6rem;font-weight:780;letter-spacing:-.01em;line-height:1.3}
+.auth-head p{margin-top:6px;font-size:.88rem;color:var(--ink-3)}
+
+/* 表单面板切换 */
+.pane{display:none}
+#m-login:checked ~ .auth-card .pane-login,
+#m-reg:checked ~ .auth-card .pane-reg{display:block;animation:paneIn .34s var(--ease)}
+@keyframes paneIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ 输入（白底 / 1px 边 / 蓝描边 focus，高 48px）============ */
+.field{margin-bottom:14px;position:relative}
+.flabel{display:block;font-size:.84rem;font-weight:650;color:var(--ink-2);margin-bottom:7px}
+.flabel-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
+.flabel-row .flabel{margin-bottom:0}
+.mini-link{font-size:.78rem;color:var(--blue-soft);text-decoration:underline;text-decoration-color:rgba(31,102,184,.4);text-underline-offset:3px}
+.mini-link:hover{color:var(--blue-2)}
+.inp{
+  display:flex;align-items:center;gap:10px;height:48px;padding:0 13px;
+  background:#fff;border:1px solid var(--line-strong);border-radius:13px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.inp:hover{border-color:rgba(0,0,0,.28)}
+.inp:focus-within{border-color:var(--blue-2);box-shadow:0 0 0 3.5px rgba(31,102,184,.13)}
+.inp .ic{width:18px;height:18px;color:var(--ink-3);transition:color .2s}
+.inp:focus-within .ic{color:var(--blue-2)}
+.inp input{
+  flex:1;min-width:0;height:100%;border:none;outline:none;background:transparent;
+  font:inherit;font-size:.93rem;color:var(--ink);
+}
+.inp input::placeholder{color:var(--ink-3);opacity:1}
+/* 内嵌"获取验证码"占位按钮 */
+.code-btn{
+  flex:none;font-family:inherit;font-size:.78rem;font-weight:650;color:var(--blue-2);
+  border:1px solid rgba(31,102,184,.35);background:rgba(42,120,214,.08);
+  border-radius:9px;padding:8px 12px;cursor:pointer;white-space:nowrap;
+  transition:background .2s,border-color .2s;
+}
+.code-btn:hover{background:rgba(42,120,214,.14);border-color:rgba(31,102,184,.5)}
+
+/* 登录方式小 tab（短信 / 邮箱密码）*/
+.way{display:none}
+#w-sms:checked ~ .way-sms,
+#w-mail:checked ~ .way-mail{display:block;animation:paneIn .32s var(--ease)}
+.mini-tabs{display:flex;justify-content:center;gap:4px;margin:6px 0 18px}
+.mini-tabs label{
+  position:relative;padding:7px 12px;font-size:.8rem;color:var(--ink-3);
+  border-radius:9px;cursor:pointer;transition:color .2s,background .2s;
+}
+.mini-tabs label:hover{color:var(--ink-2);background:rgba(0,0,0,.04)}
+.mini-tabs label::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:3px;height:1.5px;border-radius:2px;
+  background:var(--blue-2);transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease);
+}
+#w-sms:checked ~ .mini-tabs label[for="w-sms"],
+#w-mail:checked ~ .mini-tabs label[for="w-mail"]{color:var(--blue-2);font-weight:650}
+#w-sms:checked ~ .mini-tabs label[for="w-sms"]::after,
+#w-mail:checked ~ .mini-tabs label[for="w-mail"]::after{transform:scaleX(1)}
+#w-sms:focus-visible ~ .mini-tabs label[for="w-sms"],
+#w-mail:focus-visible ~ .mini-tabs label[for="w-mail"]{outline:2px solid var(--blue-2);outline-offset:2px}
+
+/* 注册试用说明小字 */
+.trial{
+  display:flex;align-items:flex-start;gap:9px;
+  margin:2px 0 16px;padding:10px 13px;font-size:.78rem;line-height:1.7;color:#17457e;
+  background:rgba(42,120,214,.07);border:1px solid rgba(31,102,184,.22);border-radius:12px;
+}
+.trial .ic{width:15px;height:15px;margin-top:3px;color:var(--blue-2)}
+.trial b{font-weight:650}
+
+/* 条款勾选行（label 只包住勾选框，链接独立以免点链误触） */
+.agree{display:flex;align-items:flex-start;gap:10px;margin:6px 0 20px}
+.agree-cb{display:inline-flex;cursor:pointer;flex:none}
+.agree input{position:absolute;opacity:0;width:1px;height:1px}
+.agree .box{
+  width:18px;height:18px;margin-top:2px;border-radius:6px;display:grid;place-items:center;
+  border:1.5px solid var(--line-strong);background:#fff;
+  transition:background .2s,border-color .2s;
+}
+.agree .box .ic{width:12px;height:12px;color:#fff;opacity:0;transform:scale(.5);transition:opacity .2s,transform .2s var(--ease)}
+.agree input:checked + .box{background:linear-gradient(135deg,var(--blue),var(--blue-deep));border-color:var(--blue-2)}
+.agree input:checked + .box .ic{opacity:1;transform:scale(1)}
+.agree input:focus-visible + .box{outline:2px solid var(--blue-2);outline-offset:2px}
+.agree-txt{font-size:.8rem;color:var(--ink-2);line-height:1.7;margin-top:1px}
+.agree-txt a{color:var(--blue-soft);text-decoration:underline;text-decoration-color:rgba(31,102,184,.4);text-underline-offset:3px}
+.agree-txt a:hover{color:var(--blue-2)}
+
+/* 卡片下方小字 */
+.under-note{
+  margin-top:22px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;
+  font-size:.8rem;color:var(--ink-3);text-align:center;
+}
+.under-note .ic{width:14px;height:14px}
+
+/* ============ footer（与主页同款）============ */
+footer{border-top:1px solid var(--line);padding:30px 0 40px}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px}
+.foot .brand{font-size:.95rem}
+.foot-line{font-size:.84rem;color:var(--ink-3);margin-left:auto}
+
+/* ============ motion ============ */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ============ responsive ============ */
+@media (max-width:639px){
+  .wrap{padding:0 16px}
+  .auth{padding:32px 14px 44px}
+  .auth-card{padding:22px 20px 20px;border-radius:22px}
+  .inp input{font-size:16px} /* 防 iOS 聚焦自动放大 */
+  .tabs label{font-size:.88rem;padding:8px 0}
+  .agree-txt{font-size:.78rem}
+  .mini-tabs label{font-size:.78rem;padding:6px 9px}
+  .foot-line{margin-left:0}
+  .brand small{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ====== 极光层：比主页安静一档（内容之下、暖白底之上）====== -->
+<div class="aurora" aria-hidden="true">
+  <i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i><i class="a5"></i>
+</div>
+
+<!-- ====== SVG sprite（内联图标，统一 24 视窗 / 1.7 圆角笔触，与主页同风格）====== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="#1f66b8"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="rgba(0,0,0,.14)"/><rect x="13" y="13" width="8" height="8" rx="2.4" fill="#6357d6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+  <symbol id="i-android" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 14 0v4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-4Z"/><path d="M8 9.5h.01M16 9.5h.01" stroke-width="2.4"/><path d="M8.5 3.8 10 6M15.5 3.8 14 6M5 13.5H3.5M20.5 13.5H19"/></symbol>
+  <!-- 以下为本页新增（同风格：stroke 1.7 / round cap） -->
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.6 18.5h2.8"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.2" width="18" height="13.6" rx="2.4"/><path d="m4.8 7.5 7.2 5.4 7.2-5.4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.2" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.3v2.6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 5 5.5v5.3c0 4.5 2.9 8.2 7 10.2 4.1-2 7-5.7 7-10.2V5.5L12 2.8Z"/><path d="m9 12 2.2 2.2 4-4.5"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"/><path d="M12 5.5 5.5 12l6.5 6.5"/></symbol>
+</svg>
+
+<!-- ====== 导航（极简：logo + 返回首页）====== -->
+<nav class="topnav" aria-label="顶部导航">
+  <div class="wrap nav-in">
+    <a class="brand" href="./bento-light.html" aria-label="BOBO 首页">
+      <svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      BOBO<small>AI 助理</small>
+    </a>
+    <a class="nav-back" href="./bento-light.html">
+      <svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg>返回首页
+    </a>
+  </div>
+</nav>
+
+<!-- ====== 主体：居中单卡 ====== -->
+<main class="auth">
+
+  <!-- 模式 radio：置于卡片之前，CSS 兄弟选择器驱动 tab / 标题 / 表单 / 按钮文案切换 -->
+  <input class="sr" type="radio" name="mode" id="m-login" checked>
+  <input class="sr" type="radio" name="mode" id="m-reg">
+
+  <div class="auth-card">
+
+    <!-- 登录 / 注册 tab -->
+    <div class="tabs">
+      <label for="m-login">登 录</label>
+      <label for="m-reg">注 册</label>
+      <span class="slider" aria-hidden="true"></span>
+    </div>
+
+    <!-- 标题区（随 tab 切换） -->
+    <div class="auth-head">
+      <div class="head head-login">
+        <span class="auth-ico"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
+        <h1>欢迎回来</h1>
+        <p>登录 BOBO 账号，同步订阅与激活状态</p>
+      </div>
+      <div class="head head-reg">
+        <span class="auth-ico"><svg class="ic" aria-hidden="true"><use href="#i-logo"/></svg></span>
+        <h1>创建账号</h1>
+        <p>一个手机号，官网与 App 通用</p>
+      </div>
+    </div>
+
+    <!-- ====== 登录表单 ====== -->
+    <!-- 占位：action="#" 为风格稿占位，正式版接入真实登录接口 -->
+    <form class="pane pane-login" action="#" method="post">
+
+      <!-- 登录方式 radio：短信 / 邮箱密码 -->
+      <input class="sr" type="radio" name="way" id="w-sms" checked>
+      <input class="sr" type="radio" name="way" id="w-mail">
+
+      <!-- 方式一：手机号 + 短信验证码 -->
+      <div class="way way-sms">
+        <div class="field">
+          <label class="flabel" for="lp">手机号</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>
+            <input id="lp" name="phone" type="tel" inputmode="numeric" maxlength="11"
+                   autocomplete="tel" placeholder="请输入 11 位手机号" required>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel" for="lc">短信验证码</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
+            <input id="lc" name="sms-code" type="text" inputmode="numeric" maxlength="6"
+                   autocomplete="one-time-code" placeholder="6 位数字验证码" required>
+            <!-- 占位：发送验证码需后端接口（正式版含 60s 倒计时禁用态），此处仅呈现样式 -->
+            <button type="button" class="code-btn">获取验证码</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 方式切换小 tab -->
+      <div class="mini-tabs">
+        <label for="w-sms">短信验证码登录</label>
+        <label for="w-mail">邮箱 + 密码登录</label>
+      </div>
+
+      <!-- 方式二：邮箱 + 密码 -->
+      <div class="way way-mail">
+        <div class="field">
+          <label class="flabel" for="le">邮箱</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
+            <input id="le" name="email" type="email" autocomplete="email" autocapitalize="off"
+                   placeholder="you@example.com" required>
+          </div>
+        </div>
+        <div class="field">
+          <div class="flabel-row">
+            <label class="flabel" for="lpw">密码</label>
+            <!-- 占位：忘记密码流程未定，href 为占位 -->
+            <a class="mini-link" href="#">忘记密码？</a>
+          </div>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="lpw" name="password" type="password" autocomplete="current-password"
+                   placeholder="请输入密码" required minlength="8">
+          </div>
+        </div>
+      </div>
+
+      <!-- 条款勾选（label 只包勾选框，协议链接独立排布，避免点链误触勾选） -->
+      <div class="agree">
+        <label class="agree-cb">
+          <input type="checkbox" name="agree" required>
+          <span class="box"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+        </label>
+        <p class="agree-txt">我已阅读并同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit">
+        <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>登录
+      </button>
+    </form>
+
+    <!-- ====== 注册表单 ====== -->
+    <!-- 占位：action="#" 为风格稿占位，正式版接入真实注册接口 -->
+    <form class="pane pane-reg" action="#" method="post">
+      <div class="field">
+        <label class="flabel" for="rp">手机号</label>
+        <div class="inp">
+          <svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>
+          <input id="rp" name="phone" type="tel" inputmode="numeric" maxlength="11"
+                 autocomplete="tel" placeholder="请输入 11 位手机号" required>
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel" for="rc">短信验证码</label>
+        <div class="inp">
+          <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
+          <input id="rc" name="sms-code" type="text" inputmode="numeric" maxlength="6"
+                 autocomplete="one-time-code" placeholder="6 位数字验证码" required>
+          <!-- 占位：同登录表单，发送逻辑为后端占位 -->
+          <button type="button" class="code-btn">获取验证码</button>
+        </div>
+      </div>
+
+      <p class="trial">
+        <svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>
+        <span>注册即送 <b>7 天 App 全功能试用</b>，无需绑定支付方式，到期前会在 App 内提醒。</span>
+      </p>
+
+      <div class="agree">
+        <label class="agree-cb">
+          <input type="checkbox" name="agree" required>
+          <span class="box"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+        </label>
+        <p class="agree-txt">我已阅读并同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit">
+        <svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg>注册
+      </button>
+    </form>
+
+  </div>
+
+  <!-- 卡片下方小字：打消隐私顾虑 -->
+  <p class="under-note">
+    <svg class="ic" aria-hidden="true"><use href="#i-android"/></svg>
+    下载 App 后用同一账号激活
+    <span aria-hidden="true">·</span>
+    <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
+    数据仍全部本地存储
+  </p>
+
+</main>
+
+<!-- ====== 页脚（与主页同款）====== -->
+<footer>
+  <div class="wrap foot">
+    <span class="brand">
+      <svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      BOBO AI 助理 · boboai.tech
+    </span>
+    <span class="foot-line">本站由 Cloudflare 全球边缘网络加速 · © 2026</span>
+  </div>
+</footer>
+</body>
+</html>
