@@ -1,0 +1,282 @@
+---
+// ===== 管理台（站长自用，不进导航/页脚/搜索引擎）：密钥门 → 注册用户一览 =====
+// 零 JS 豁免第三类：连自有后端（license-server /admin/users）的管理数据页。
+// ADMIN_KEY 只存本机 localStorage（key `bobo_admin`），与用户 token（bobo_token）分开。
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { LIC } from "../config";
+---
+
+<Layout title="管理台 — BOBO AI" noindex>
+  <Nav variant="sub" ctaLabel="" />
+
+  <main class="adm" data-api={LIC}>
+    <div class="wrap">
+
+      <!-- 密钥门（无密钥 / 密钥失效时亮出） -->
+      <div class="gate" id="gate" hidden>
+        <div class="cell gate-card">
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-lock" /></svg></span>
+          <h3>管理台</h3>
+          <p>输入管理密钥，查看注册用户与订阅情况。密钥只存在你这台设备上。</p>
+          <form class="key-form" id="key-form">
+            <input type="password" id="key" placeholder="管理密钥" autocomplete="off" required />
+            <button class="btn btn-primary btn-sm" type="submit"><span>进入</span></button>
+          </form>
+          <p class="key-err" id="key-err" hidden></p>
+        </div>
+      </div>
+
+      <!-- 数据面板 -->
+      <div class="panel" id="panel" hidden>
+        <div class="page-head">
+          <span class="eyebrow">Admin</span>
+          <h1>用户一览</h1>
+          <div class="bar">
+            <input type="search" id="q" placeholder="按邮箱筛选…" />
+            <span class="upd" id="updated"></span>
+            <button class="btn btn-sm" id="reload" type="button">刷新</button>
+            <button class="btn btn-sm" id="exit" type="button">退出</button>
+          </div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+        <div class="ulist" id="users"></div>
+
+        <!-- 网络异常兜底（密钥保留，可重试） -->
+        <div class="gate" id="lerr" hidden>
+          <div class="cell gate-card">
+            <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cloud" /></svg></span>
+            <h3>网络异常，数据没拉到</h3>
+            <p>密钥还在，多半是线路不稳——重试一下就好。</p>
+            <button class="btn btn-primary btn-sm" id="retry" type="button">重试</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <Footer />
+
+  <script>
+    // ===== 管理台数据流：POST /admin/users（Bearer ADMIN_KEY）→ 汇总卡 + 用户列表（本机按邮箱筛选） =====
+    const API = (document.querySelector(".adm") as HTMLElement).dataset.api!;
+    const KEY_NAME = "bobo_admin"; // 与用户会话 bobo_token 分开，退出登录不影响管理台
+    const TIER_NAME: Record<number, string> = { 0: "V0 基础版", 1: "V1 情报版", 2: "V2 旗舰版" };
+
+    type Lic = {
+      app: string; app_name: string | null; tier: number; plan: string;
+      status: string; activated_at: string | null; subscription_expires_at: number | null; devices: number;
+    };
+    type User = {
+      id: number; email: string; status: string; created_at: string; last_login_at: string | null; licenses: Lic[];
+    };
+    type Data = {
+      ok: true;
+      stats: { users: number; bound_licenses: number; active_subscriptions: number };
+      users: User[];
+    };
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const esc = (s: string) =>
+      s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+    const dateStr = (v: string | number | null | undefined) =>
+      v == null ? "—" : new Date(typeof v === "number" ? v * 1000 : v).toISOString().slice(0, 10);
+
+    let data: Data | null = null;
+
+    function statusOf(l: Lic, now: number): "active" | "expired" | "unused" | "revoked" {
+      if (l.status === "revoked") return "revoked";
+      if (l.status === "unused") return "unused";
+      return Number(l.subscription_expires_at ?? 0) > now ? "active" : "expired";
+    }
+
+    const ST_CHIP: Record<string, [string, string]> = {
+      active: ["ok", "生效中"],
+      expired: ["dim", "已到期"],
+      unused: ["warn", "未激活"],
+      revoked: ["bad", "已吊销"],
+    };
+
+    function render() {
+      if (!data) return;
+      const s = data.stats;
+      $("stats").innerHTML = `
+        <div class="cell stat"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user" /></svg></span>
+          <b>${s.users}</b><span>注册用户</span></div>
+        <div class="cell stat"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-box" /></svg></span>
+          <b>${s.bound_licenses}</b><span>绑定激活码</span></div>
+        <div class="cell stat"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg></span>
+          <b>${s.active_subscriptions}</b><span>生效订阅</span></div>`;
+      renderList();
+      $("updated").textContent = `更新于 ${new Date().toTimeString().slice(0, 5)}`;
+    }
+
+    function renderList() {
+      if (!data) return;
+      const q = ($("q") as HTMLInputElement).value.trim().toLowerCase();
+      const now = Math.floor(Date.now() / 1000);
+      const list = q ? data.users.filter((u) => u.email.toLowerCase().includes(q)) : data.users;
+      $("users").innerHTML = list.length
+        ? list.map((u) => {
+            const lics = u.licenses
+              .map((l) => {
+                const [cls, txt] = ST_CHIP[statusOf(l, now)] ?? ["dim", l.status];
+                return `<span class="lic">
+                  <b>${TIER_NAME[l.tier] ?? `V${l.tier}`}</b> · ${esc(l.plan ?? "—")}
+                  <i class="chip ${cls}">${txt}</i>
+                  到期 ${dateStr(l.subscription_expires_at)} · 设备 ${l.devices} 台
+                </span>`;
+              })
+              .join("");
+            return `<div class="cell ucard">
+              <div class="u-head">
+                <b class="u-mail">${esc(u.email)}</b>
+                <i class="chip ${u.status === "active" ? "ok" : "bad"}">${u.status === "active" ? "正常" : "已禁用"}</i>
+                <span class="u-meta">#${u.id} · 注册 ${dateStr(u.created_at)} · 最近登录 ${dateStr(u.last_login_at)}</span>
+              </div>
+              <div class="u-lics">${lics || '<span class="none">未绑定激活码</span>'}</div>
+            </div>`;
+          }).join("")
+        : `<p class="none">没有匹配「${esc(q)}」的账号。</p>`;
+    }
+
+    /** 三态：ok 成功 / unauth 密钥失效（清掉回密钥门）/ err 网络异常（密钥保留可重试） */
+    async function load(): Promise<"ok" | "unauth" | "err"> {
+      const key = localStorage.getItem(KEY_NAME);
+      if (!key) return "unauth";
+      try {
+        const res = await fetch(`${API}/admin/users`, { method: "POST", headers: { Authorization: `Bearer ${key}` } });
+        if (res.status === 401) return "unauth";
+        const d = await res.json().catch(() => null);
+        if (!res.ok || !d?.ok) return "err";
+        data = d;
+        render();
+        return "ok";
+      } catch {
+        return "err";
+      }
+    }
+
+    function showGate() {
+      $("gate").hidden = false;
+      $("panel").hidden = true;
+      $("lerr").hidden = true;
+    }
+
+    async function boot() {
+      $("gate").hidden = true;
+      $("lerr").hidden = true;
+      if (!localStorage.getItem(KEY_NAME)) {
+        showGate();
+        return;
+      }
+      $("panel").hidden = false;
+      const r = await load();
+      if (r === "ok") return;
+      $("panel").hidden = true;
+      if (r === "unauth") {
+        localStorage.removeItem(KEY_NAME);
+        showGate();
+      } else $("lerr").hidden = false;
+    }
+
+    // ---- 密钥门：提交即验证，通过才落 localStorage ----
+    $("key-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = $("key") as HTMLInputElement;
+      const err = $("key-err");
+      const key = input.value.trim();
+      if (!key) return;
+      err.hidden = true;
+      localStorage.setItem(KEY_NAME, key); // 先放进去让 load() 带上；失败即清
+      const r = await load();
+      if (r === "ok") {
+        input.value = "";
+        $("gate").hidden = true;
+        $("panel").hidden = false;
+      } else {
+        localStorage.removeItem(KEY_NAME);
+        err.textContent = r === "unauth" ? "密钥不对，再检查一下" : "网络异常，稍后再试";
+        err.hidden = false;
+      }
+    });
+
+    $("q").addEventListener("input", renderList);
+    $("reload").addEventListener("click", async () => {
+      $("reload").textContent = "刷新中…";
+      await load();
+      $("reload").textContent = "刷新";
+    });
+    $("exit").addEventListener("click", () => {
+      localStorage.removeItem(KEY_NAME);
+      data = null;
+      showGate();
+    });
+    $("retry").addEventListener("click", boot);
+
+    await boot();
+  </script>
+</Layout>
+
+<style>
+  /* ============ 页面骨架（与 account 页同节奏的单栏管理页） ============ */
+  .adm { padding: 48px 0 72px; }
+  .adm .wrap { max-width: 880px; }
+  .page-head { margin-bottom: 22px; animation: rise 0.6s var(--ease) both; }
+  .page-head h1 { font-size: clamp(1.6rem, 3vw, 2.05rem); letter-spacing: -0.01em; margin-top: 12px; font-weight: 780; }
+
+  /* ============ 密钥门 / 网络异常兜底 ============ */
+  .gate { display: flex; justify-content: center; padding: 64px 0 32px; }
+  .gate-card { max-width: 400px; width: 100%; padding: 34px 32px 30px; text-align: center; animation: rise 0.6s var(--ease) both; }
+  .gate-card .ico { display: inline-flex; width: 46px; height: 46px; align-items: center; justify-content: center; border-radius: 14px; background: color-mix(in oklab, var(--blue) 12%, transparent); color: var(--blue); margin-bottom: 14px; }
+  .gate-card .ico .ic { width: 22px; height: 22px; }
+  .gate-card h3 { font-size: 1.22rem; font-weight: 760; }
+  .gate-card p { margin: 10px 0 18px; color: var(--ink-2); font-size: 0.92rem; line-height: 1.7; }
+  .key-form { display: flex; gap: 10px; }
+  .key-form input {
+    flex: 1; min-width: 0; padding: 10px 14px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--ink-1) 14%, transparent);
+    background: var(--bg); font-size: 0.95rem; color: var(--ink-1); outline: none;
+  }
+  .key-form input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in oklab, var(--blue) 15%, transparent); }
+  .key-err { margin-top: 12px; color: var(--red); font-size: 0.86rem; }
+
+  /* ============ 工具条 ============ */
+  .bar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .bar input {
+    flex: 1; min-width: 180px; max-width: 300px; padding: 9px 14px; border-radius: 12px;
+    border: 1px solid color-mix(in oklab, var(--ink-1) 14%, transparent); background: var(--bg); font-size: 0.92rem; color: var(--ink-1); outline: none;
+  }
+  .bar input:focus { border-color: var(--blue); }
+  .upd { color: var(--ink-3); font-size: 0.82rem; margin-right: auto; }
+
+  /* ============ 汇总卡 ============ */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); margin-bottom: var(--gap); animation: rise 0.6s 0.06s var(--ease) both; }
+  .stat { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; }
+  .stat .ico { width: 36px; height: 36px; border-radius: 11px; background: color-mix(in oklab, var(--blue) 10%, transparent); color: var(--blue); display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+  .stat .ico .ic { width: 18px; height: 18px; }
+  .stat b { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; }
+  .stat span:last-child { color: var(--ink-3); font-size: 0.84rem; }
+
+  /* ============ 用户列表 ============ */
+  .ulist { display: flex; flex-direction: column; gap: 12px; animation: rise 0.6s 0.12s var(--ease) both; }
+  .ucard { padding: 16px 20px; }
+  .u-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .u-mail { font-size: 1rem; font-weight: 720; word-break: break-all; }
+  .u-meta { color: var(--ink-3); font-size: 0.82rem; }
+  .u-lics { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .lic { font-size: 0.86rem; color: var(--ink-2); }
+  .lic b { color: var(--ink-1); font-weight: 700; }
+  .chip { display: inline-block; font-style: normal; font-size: 0.74rem; font-weight: 640; padding: 1px 8px; border-radius: 999px; margin: 0 2px; }
+  .chip.ok { background: color-mix(in oklab, var(--green) 14%, transparent); color: var(--green); }
+  .chip.warn { background: color-mix(in oklab, var(--gold) 16%, transparent); color: var(--gold); }
+  .chip.dim { background: color-mix(in oklab, var(--ink-1) 8%, transparent); color: var(--ink-3); }
+  .chip.bad { background: color-mix(in oklab, var(--red) 12%, transparent); color: var(--red); }
+  .none { color: var(--ink-3); font-size: 0.88rem; }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+</style>

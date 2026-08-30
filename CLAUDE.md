@@ -33,6 +33,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
   - `pricing.astro` 订阅页：1月/3月/1年/终身周期切换 + 三档价格联动 + 差价升级说明
   - `login.astro` 登录/注册：邮箱+密码 v1（fetch `LIC` 的 `/auth/login`/`/auth/register`，成功 token 存 localStorage 跳 `/account/`；登录↔注册 tab 仍是 CSS radio）
   - `account.astro` 用户中心：未登录出引导卡；登录后左栏导航 + 账户信息/订阅状态（剩余天数进度条，按名下生效授权取到期最晚的一条）/激活码绑定（`/auth/bind`）与记录——数据全部来自 `/auth/me`
+  - `admin.astro` 管理台（站长自用，不进导航/页脚，`noindex` 不进搜索引擎）：密钥门 → POST `LIC` 的 `/admin/users`（Bearer `ADMIN_KEY`）拉注册用户+名下激活码+汇总卡，本地按邮箱筛选；密钥存 localStorage（key `bobo_admin`，与用户会话 `bobo_token` 分开）
 
 页面内容数据驱动：frontmatter 数组（主页 `features`/`tiers`/`faqs`/`stats`，订阅页 `CYCLES`/`TIERS`/`PRICES` 等）+ map 渲染。改文案改数组，不动标记。
 
@@ -40,9 +41,9 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 **零 JS 约定的两处豁免**：
 - `src/pages/app.astro`（2026-08-30，网页版本地大脑页）：fetch 用户本机 daemon（`config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停。产品形态决定的（数据在用户机器上，静态站拿不到）。
-- `src/pages/login.astro` 与 `src/pages/account.astro`（2026-08-31，账号两页）：表单提交/数据拉取要连自有后端 `lic.boboai.tech`（license-server，`config.ts` 的 `LIC`），纯 CSS 做不了。token 存 localStorage（key `bobo_token`）。
+- `src/pages/login.astro` 与 `src/pages/account.astro`（2026-08-31，账号两页）：表单提交/数据拉取要连自有后端 `lic.boboai.tech`（license-server，`config.ts` 的 `LIC`），纯 CSS 做不了。token 存 localStorage（key `bobo_token`）。`admin.astro` 管理台同属此类（连 `/admin/users`，密钥 key `bobo_admin`）。
 
-除以上三页外继续零 JS；新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
+除以上四页外继续零 JS；新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
 
 **发新版本流程**：改 `src/config.ts`（VERSION/VCODE）→ 按上面 curl 命令拉新 APK（文件名随版本变）→ pricing 价格如有调整同步 `PRICES`。
 
