@@ -37,6 +37,8 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 页面内容数据驱动：frontmatter 数组（主页 `features`/`tiers`/`faqs`/`stats`，订阅页 `CYCLES`/`TIERS`/`PRICES` 等）+ map 渲染。改文案改数组，不动标记。
 
+**页面/视觉改动一律由设计 agent 做**（`.claude/agents/ui-designer.md`，2026-08-31 用户定规：程序直出的界面「好丑」）。新页面、版块改版、表单/管理台这类界面活，先让设计 agent 出结构与样式并实现标记；主会话只做数据接线与后端联调，不要自己写页面样式。文案向的改动走 `.claude/agents/brand-manager.md`。（会话内 agent 注册表可能没刷新，用 Agent 工具起 general-purpose 并让它把 ui-designer.md 当系统提示词执行即可。）
+
 - `functions/`——Pages Functions（随 dist 一起部署）：`_middleware.js` 根域 `boboai.tech` 301 到 www（localStorage 按源隔离会串登录态；`_redirects` 的 host 规则在带 Functions 的项目上不生效，故用中间件）；`api/dl/[[path]].js` GitHub release 资产同源反代（网页下载进度条数据源，白名单只放行本仓 daemon 资产）。
 
 交互全部零 JS：折叠用原生 `<details>`，切换用 CSS radio + 兄弟选择器（登录 tab、周期×价格联动）。新增交互先想纯 CSS 方案。
