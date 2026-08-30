@@ -37,6 +37,8 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 页面内容数据驱动：frontmatter 数组（主页 `features`/`tiers`/`faqs`/`stats`，订阅页 `CYCLES`/`TIERS`/`PRICES` 等）+ map 渲染。改文案改数组，不动标记。
 
+- `functions/`——Pages Functions（随 dist 一起部署）：`_middleware.js` 根域 `boboai.tech` 301 到 www（localStorage 按源隔离会串登录态；`_redirects` 的 host 规则在带 Functions 的项目上不生效，故用中间件）；`api/dl/[[path]].js` GitHub release 资产同源反代（网页下载进度条数据源，白名单只放行本仓 daemon 资产）。
+
 交互全部零 JS：折叠用原生 `<details>`，切换用 CSS radio + 兄弟选择器（登录 tab、周期×价格联动）。新增交互先想纯 CSS 方案。
 
 **零 JS 约定的两处豁免**：

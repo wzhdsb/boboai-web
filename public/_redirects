@@ -1,2 +1,0 @@
-# 根域统一 301 到 www：localStorage 按源隔离，两个域名各自登录会串账号态（2026-08-31 修登录态 bug）
-https://boboai.tech/* https://www.boboai.tech/:splat 301
