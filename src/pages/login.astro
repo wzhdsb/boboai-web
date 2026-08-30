@@ -145,6 +145,7 @@ import { LIC } from "../config";
     // ===== 登录/注册：fetch license-server（config.ts 的 LIC），token 存 localStorage =====
     const API = (document.querySelector(".auth") as HTMLElement).dataset.api!;
     const TOKEN_KEY = "bobo_token";
+    const EMAIL_KEY = "bobo_email"; // 登录态邮箱：导航右上角「头像 + 邮箱」胶囊用（纯展示）
 
     // 已登录（本地有 token）直接进用户中心；token 失效则由 /account/ 踢回来
     if (localStorage.getItem(TOKEN_KEY)) location.replace("/account/");
@@ -195,6 +196,7 @@ import { LIC } from "../config";
             return;
           }
           localStorage.setItem(TOKEN_KEY, d.token);
+          if (d.user?.email) localStorage.setItem(EMAIL_KEY, d.user.email);
           location.href = "/account/";
         } catch {
           showErr(form, "网络异常，稍后再试");

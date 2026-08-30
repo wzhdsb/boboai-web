@@ -5,11 +5,8 @@ interface Props {
   /** 右侧按钮文案；传空字符串则隐藏按钮 */
   ctaLabel?: string;
   ctaHref?: string;
-  /** 已登录态：传入用户名后，右侧以「首字母头像 + 用户名」替代 CTA 按钮（点击进用户中心 /account/）；不传则维持原形态 */
-  avatar?: string;
 }
-const { variant = "home", ctaLabel = "注册登录", ctaHref = "/login/", avatar } = Astro.props;
-const avatarInitial = avatar?.trim().charAt(0).toUpperCase();
+const { variant = "home", ctaLabel = "注册登录", ctaHref = "/login/" } = Astro.props;
 ---
 
 <nav class="topnav" aria-label="主导航">
@@ -26,21 +23,35 @@ const avatarInitial = avatar?.trim().charAt(0).toUpperCase();
         <a href="#faq">FAQ</a>
       </div>
     )}
-    {avatar ? (
-      /* 占位：已登录态——圆形头像占位（首字母）+ 用户名占位，正式版接真实头像与昵称 */
-      <a class="nav-user" href="/account/">
-        <span class="avatar" aria-hidden="true">{avatarInitial}</span>
-        <span class="nav-uname">{avatar}</span>
+    {ctaLabel && (
+      <a class="btn btn-primary btn-sm nav-cta" href={ctaHref} id="nav-login">
+        <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>{ctaLabel}
       </a>
-    ) : (
-      ctaLabel && (
-        <a class="btn btn-primary btn-sm nav-cta" href={ctaHref}>
-          <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>{ctaLabel}
-        </a>
-      )
     )}
+    {/* 已登录态（运行时渐进增强）：默认隐藏，下方内联脚本读本机 bobo_token + bobo_email 才亮出；无 JS 时维持登录按钮 */}
+    <a class="nav-user" href="/account/" id="nav-user" hidden>
+      <span class="avatar" aria-hidden="true" id="nav-avatar">·</span>
+      <span class="nav-uname" id="nav-uname"></span>
+    </a>
   </div>
 </nav>
+<script is:inline>
+  // 登录态渐进增强：本机有会话 → 右上角换「首字母头像 + 邮箱」（无昵称系统，邮箱即身份）。
+  // 纯展示不鉴权，真正的登录校验在账号页/后端；无 JS 或未登录时维持原按钮，站点照常可用。
+  (function () {
+    try {
+      var em = localStorage.getItem("bobo_email");
+      if (!localStorage.getItem("bobo_token") || !em) return;
+      var u = document.getElementById("nav-user");
+      if (!u || u.hidden === false) return;
+      document.getElementById("nav-avatar").textContent = (em.charAt(0) || "·").toUpperCase();
+      document.getElementById("nav-uname").textContent = em;
+      u.hidden = false;
+      var c = document.getElementById("nav-login");
+      if (c) c.hidden = true;
+    } catch (e) {}
+  })();
+</script>
 
 <style>
   .topnav {
@@ -98,7 +109,7 @@ const avatarInitial = avatar?.trim().charAt(0).toUpperCase();
   .nav-links a:hover { color: var(--ink-1); background: rgba(0, 0, 0, 0.045); }
   .nav-links a:hover::after { transform: scaleX(1); }
   .nav-cta { margin-left: auto; }
-  /* 已登录态（avatar prop 传入时渲染，与 nav-cta 互斥） */
+  /* 已登录态（内联脚本亮出，与 nav-cta 互斥显示） */
   .nav-user {
     margin-left: auto;
     display: flex;
@@ -124,8 +135,17 @@ const avatarInitial = avatar?.trim().charAt(0).toUpperCase();
     font-size: 0.92rem;
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65), 0 2px 6px rgba(20, 28, 45, 0.14);
   }
-  .nav-uname { font-size: 0.9rem; font-weight: 650; color: var(--ink-1); }
+  .nav-uname {
+    font-size: 0.9rem;
+    font-weight: 650;
+    color: var(--ink-1);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   @media (max-width: 899px) {
     .nav-links { display: none; }
+    .nav-uname { display: none; } /* 小屏只留头像圆点，长邮箱不挤爆导航 */
   }
 </style>

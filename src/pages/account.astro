@@ -179,6 +179,7 @@ import { APK, LIC } from "../config";
     // ===== 用户中心数据流：/auth/me 拉账号+名下授权；绑定 /auth/bind；退出 /auth/logout =====
     const API = (document.querySelector(".acct") as HTMLElement).dataset.api!;
     const TOKEN_KEY = "bobo_token";
+    const EMAIL_KEY = "bobo_email"; // 导航「头像 + 邮箱」胶囊展示用，与 token 同生共死
     const TIER_NAME: Record<number, string> = { 0: "V0 基础版", 1: "V1 情报版", 2: "V2 旗舰版" };
     const PERKS: Record<number, [string, string][]> = {
       0: [["chat", "AI 对话·识图·语音"], ["candle", "实时行情与自选持仓"], ["bell", "自设条件的盘中提醒"], ["layers", "本地备份与恢复"]],
@@ -314,6 +315,7 @@ import { APK, LIC } from "../config";
         if (res.status === 401 || res.status === 403) return "unauth";
         const d = await res.json().catch(() => null);
         if (!res.ok || !d?.ok) return "err";
+        localStorage.setItem(EMAIL_KEY, d.user.email); // 顺手续新，防止登录后改库导致导航邮箱过期
         render(d.user, d.licenses);
         return "ok";
       } catch {
@@ -336,6 +338,7 @@ import { APK, LIC } from "../config";
       $("acct").hidden = true;
       if (r === "unauth") {
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(EMAIL_KEY);
         showGate();
       } else $("lerr").hidden = false;
     }
@@ -347,6 +350,7 @@ import { APK, LIC } from "../config";
       e.preventDefault();
       try { await fetch(`${API}/auth/logout`, { method: "POST", headers: authHeaders() }); } catch { /* 本地 token 反正要清 */ }
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(EMAIL_KEY);
       location.href = "/login/";
     });
 

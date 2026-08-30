@@ -27,7 +27,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 - `src/config.ts`——**全站共享常量**：`VERSION` / `VCODE` / `APK`（由版本号派生）/ `GITHUB`（备用渠道）/ `MIRROR` / `SITE` / `LIC`（账号后端，dev 指本地 wrangler），以及网页版一组 `DAEMON*`。各页面 import 使用，禁止在标记里硬编码版本号。
 - `src/layouts/Layout.astro`——HTML 外壳 + 全局样式：设计令牌（`:root` CSS 变量：`--bg/--s1~3`、文字三档 `--ink-1/2/3`、蓝族主色 `--blue` 族、六格辅助色 `--violet/--orange/--gold/--magenta`、语义 `--red/--green`）、`.btn`/`.cell`/`.eyebrow` 等全局类、内联 SVG 雪碧图。新增颜色应复用或扩展这些令牌，不要硬编码十六进制值。
-- `src/components/`——共享组件：`Nav.astro`（`variant: "home" | "sub"`；可选 `avatar` prop 显示登录态头像）、`Footer.astro`、`Aurora.astro`（流动极光背景层，`strength: "full" | "soft"`）。
+- `src/components/`——共享组件：`Nav.astro`（`variant: "home" | "sub"`；`ctaLabel` 传空串隐藏右侧按钮；登录态是运行时渐进增强——组件尾部内联脚本读本机 `bobo_token`+`bobo_email`，右上角换成「首字母头像 + 邮箱」胶囊链到 `/account/`，无 JS/未登录维持登录按钮）、`Footer.astro`、`Aurora.astro`（流动极光背景层，`strength: "full" | "soft"`）。
 - `src/pages/`——四个页面：
   - `index.astro` 主页：hero、功能 Bento 拼贴、三档等级（订阅按钮 → `/pricing/`）、下载模块（官网直链大按钮 + 构建期生成的真二维码〔`qrcode` 包，frontmatter 出 SVG，指向 `SITE+APK`〕+ 安装指引 + GitHub 降级进「其他下载方式」）
   - `pricing.astro` 订阅页：1月/3月/1年/终身周期切换 + 三档价格联动 + 差价升级说明
@@ -43,7 +43,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 - `src/pages/app.astro`（2026-08-30，网页版本地大脑页）：fetch 用户本机 daemon（`config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停。产品形态决定的（数据在用户机器上，静态站拿不到）。
 - `src/pages/login.astro` 与 `src/pages/account.astro`（2026-08-31，账号两页）：表单提交/数据拉取要连自有后端 `lic.boboai.tech`（license-server，`config.ts` 的 `LIC`），纯 CSS 做不了。token 存 localStorage（key `bobo_token`）。`admin.astro` 管理台同属此类（连 `/admin/users`，密钥 key `bobo_admin`）。
 
-除以上四页外继续零 JS；新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
+除以上四页外继续零 JS；`Nav.astro` 尾部另有一段全站内联微脚本做登录态展示（读 localStorage 换头像胶囊，纯渐进增强，无 JS 时站点完整可用）。新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
 
 **发新版本流程**：改 `src/config.ts`（VERSION/VCODE）→ 按上面 curl 命令拉新 APK（文件名随版本变）→ pricing 价格如有调整同步 `PRICES`。
 
