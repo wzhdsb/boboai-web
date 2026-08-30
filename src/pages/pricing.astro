@@ -3,7 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Aurora from "../components/Aurora.astro";
-import { VERSION, APK } from "../config";
+import { VERSION, APK, LIC } from "../config";
 
 // ===== 订阅周期 =====
 // 约定：radio id = `cy-${key}`，价格组 class = `pg-${key}` —— 标记与 <style> 里的
@@ -67,8 +67,9 @@ const TIERS: Tier[] = [
   },
 ];
 
-// ===== 二维价格表：PRICES[档位][周期] 驱动 3 档 × 4 周期共 12 组价格区 =====
-// TODO(定价公告)：¥xx / ¥xxx 均为占位数字，正式价格以公告为准（「省 XX%」「立省 XX%」同）
+// ===== 二维价格表：构建期占位数字，仅作无 JS / 后端未配置时的降级底 =====
+// 正式价格存 license-server（site_config.pricing），页面脚本 GET /pricing 实时套用（见文末 script）。
+// 后端存的是每周期「合计价」；1m/3m/1y 的大数字按月折算展示，合计与立省% 由脚本算进 pnote。
 const PRICES: Record<TierTag, Record<CycleKey, string>> = {
   V0: { "1m": "¥xx", "3m": "¥xx", "1y": "¥xx", life: "¥xxx" },
   V1: { "1m": "¥xx", "3m": "¥xx", "1y": "¥xx", life: "¥xxx" },
@@ -106,7 +107,7 @@ const STEPS = [
     </div>
   </header>
 
-  <main>
+  <main class="pricing" data-api={LIC}>
     <!-- ====== 定价：周期切换 + 三档卡片 + 升级说明 ====== -->
     <section id="pricing" class="sec-pricing">
       <div class="wrap">
@@ -126,18 +127,19 @@ const STEPS = [
 
         <div class="plans">
           {TIERS.map((t) => (
-            <article class:list={["plan", { "plan--hot": t.hot }]}>
+            <article class:list={["plan", { "plan--hot": t.hot }]} data-t={t.tag}>
               {t.hot && <span class="badge">推荐</span>}
-              <div class="tname">{t.name}<span class="tier">{t.tag}</span></div>
+              <div class="tname">{t.name}<span class="tier">{t.tag}</span><i class="ptag" hidden></i></div>
               <p class="tdesc">{t.desc}</p>
               <div class="pricebox">
                 {CYCLES.map((c) => (
                   <div class={`pg pg-${c.key}`}>
                     <div class="pline">
-                      <span class="pnum">{PRICES[t.tag][c.key]}</span>
+                      <s class="pold" data-t={t.tag} data-c={c.key} hidden></s>
+                      <span class="pnum" data-t={t.tag} data-c={c.key}>{PRICES[t.tag][c.key]}</span>
                       <span class="pper">{c.per}</span>
                     </div>
-                    <p class="pnote">
+                    <p class="pnote" data-t={t.tag} data-c={c.key}>
                       {c.note.map((seg) => (typeof seg === "string" ? seg : <b>{seg.b}</b>))}
                     </p>
                   </div>
@@ -202,6 +204,80 @@ const STEPS = [
   </div>
 
   <Footer />
+
+  <script>
+    // ===== 定价实时化（2026-08-31）：GET LIC /pricing 拉价格与促销，未配置/网络异常维持占位 =====
+    // 零 JS 豁免第五类成员：连自有后端的数据页（与管理台同一配置源）。
+    // 后端存每周期合计价：1m/3m/1y 大数字 = 合计÷月数，合计与立省% 写进 pnote；促销生效时原价划线、旁显促销价。
+    const API = (document.querySelector("main.pricing") as HTMLElement).dataset.api!;
+    const MONTHS: Record<string, number> = { "1m": 1, "3m": 3, "1y": 12, life: 0 };
+    const TIERS = ["V0", "V1", "V2"];
+    const CYCLES = ["1m", "3m", "1y", "life"];
+    type Matrix = Record<string, Record<string, number>>;
+    type Pricing = { prices: Matrix; promo: { name: string; prices: Matrix } | null; promo_active?: boolean };
+
+    const fmt = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
+    const yuan = (v: number) => `¥${fmt(v)}`;
+
+    function apply(d: Pricing) {
+      const promo = d.promo_active && d.promo ? d.promo : null;
+      for (const t of TIERS) {
+        for (const c of CYCLES) {
+          const base = d.prices[t]?.[c];
+          if (typeof base !== "number") continue;
+          const pp = promo ? promo.prices[t]?.[c] : undefined;
+          const on = typeof pp === "number" && pp < base; // 促销价不低于原价就不划线
+          const eff = on ? pp : base;
+          const m = MONTHS[c];
+          const num = document.querySelector(`.pnum[data-t="${t}"][data-c="${c}"]`);
+          const old = document.querySelector<HTMLElement>(`.pold[data-t="${t}"][data-c="${c}"]`);
+          const note = document.querySelector(`.pnote[data-t="${t}"][data-c="${c}"]`);
+          if (num) num.textContent = m ? yuan(eff / m) : yuan(eff);
+          if (old) {
+            old.hidden = !on;
+            if (on) old.textContent = m ? yuan(base / m) : yuan(base);
+          }
+          if (note) {
+            const tot = `<b>${yuan(eff)}</b>`;
+            const totX = on ? `<s>${yuan(base)}</s> ${tot}` : tot;
+            if (c === "1m") note.innerHTML = `按月支付 · 到期可续订或升级`;
+            else if (c === "3m") note.innerHTML = `3 个月一付 · 合计 ${totX}`;
+            else if (c === "1y") {
+              const m1 = d.prices[t]?.["1m"] ?? 0;
+              const save = m1 > 0 ? Math.max(0, Math.round((1 - eff / (m1 * 12)) * 100)) : 0;
+              note.innerHTML = `年付一付 · 合计 ${totX} · <b>立省 ${save}%</b>`;
+            } else note.innerHTML = `一次性买断 · 永久有效`;
+          }
+        }
+        if (promo) {
+          const tag = document.querySelector<HTMLElement>(`.plan[data-t="${t}"] .ptag`);
+          if (tag) {
+            tag.textContent = promo.name;
+            tag.hidden = false;
+          }
+        }
+      }
+      // 周期切换器「省 XX%」角标按 V2（推荐档）基础价折算
+      const v2m = d.prices.V2?.["1m"];
+      const v2y = d.prices.V2?.["1y"];
+      const chip = document.querySelector<HTMLElement>(".cycle .save");
+      if (chip) {
+        const save = v2m && v2y ? Math.max(0, Math.round((1 - v2y / (v2m * 12)) * 100)) : 0;
+        if (save > 0) chip.textContent = `省 ${save}%`;
+        else chip.hidden = true;
+      }
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(`${API}/pricing`);
+        const d = await res.json().catch(() => null);
+        if (res.ok && d?.ok && d.pricing) apply(d.pricing);
+      } catch {
+        /* 网络异常：维持占位数字 */
+      }
+    })();
+  </script>
 </Layout>
 
 <style>
@@ -396,6 +472,29 @@ const STEPS = [
   .pper { font-size: 0.92rem; font-weight: 600; color: var(--ink-3); }
   .pnote { margin-top: 7px; font-size: 0.78rem; color: var(--ink-3); line-height: 1.6; }
   .pnote b { color: var(--blue-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
+  /* 促销：原价划线 + 红角标（定价实时化脚本启用时亮出） */
+  .pold {
+    font-size: 1.15rem;
+    font-weight: 650;
+    color: var(--ink-3);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in oklab, var(--red) 60%, transparent);
+    text-decoration-thickness: 1.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pnote s { color: var(--ink-3); text-decoration-color: color-mix(in oklab, var(--red) 55%, transparent); }
+  .ptag {
+    font-style: normal;
+    font-size: 0.66rem;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    color: var(--red);
+    background: color-mix(in oklab, var(--red) 9%, transparent);
+    border: 1px solid color-mix(in oklab, var(--red) 30%, transparent);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
 
   .plan ul { list-style: none; margin-top: 16px; flex: 1; position: relative; }
   .plan li { display: flex; gap: 10px; align-items: flex-start; padding: 9.5px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.1); font-size: 0.88rem; color: var(--ink-2); line-height: 1.55; }

@@ -28,31 +28,71 @@ import { LIC } from "../config";
         </div>
       </div>
 
-      <!-- 数据面板 -->
+      <!-- 数据面板：用户一览 / 定价编辑 两个页签 -->
       <div class="panel" id="panel" hidden>
         <div class="page-head">
           <span class="eyebrow">Admin</span>
-          <h1>用户一览</h1>
+          <h1>管理台</h1>
           <div class="bar">
-            <input type="search" id="q" placeholder="按邮箱筛选…" />
+            <div class="tabs">
+              <button class="tab on" id="tab-users" type="button">用户</button>
+              <button class="tab" id="tab-pricing" type="button">定价</button>
+            </div>
             <span class="upd" id="updated"></span>
             <button class="btn btn-sm" id="reload" type="button">刷新</button>
             <button class="btn btn-sm" id="exit" type="button">退出</button>
           </div>
         </div>
 
-        <div class="stats" id="stats"></div>
-        <div class="ulist" id="users"></div>
+        <!-- 用户一览 -->
+        <section id="sec-users">
+          <input type="search" id="q" class="usearch" placeholder="按邮箱筛选…" />
+          <div class="stats" id="stats"></div>
+          <div class="ulist" id="users"></div>
 
-        <!-- 网络异常兜底（密钥保留，可重试） -->
-        <div class="gate" id="lerr" hidden>
-          <div class="cell gate-card">
-            <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cloud" /></svg></span>
-            <h3>网络异常，数据没拉到</h3>
-            <p>密钥还在，多半是线路不稳——重试一下就好。</p>
-            <button class="btn btn-primary btn-sm" id="retry" type="button">重试</button>
+          <!-- 网络异常兜底（密钥保留，可重试） -->
+          <div class="gate" id="lerr" hidden>
+            <div class="cell gate-card">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cloud" /></svg></span>
+              <h3>网络异常，数据没拉到</h3>
+              <p>密钥还在，多半是线路不稳——重试一下就好。</p>
+              <button class="btn btn-primary btn-sm" id="retry" type="button">重试</button>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <!-- 定价编辑：保存进 license-server（site_config.pricing），订阅页实时生效，无需发版 -->
+        <section id="sec-pricing" hidden>
+          <div class="cell pcard">
+            <h3>定价</h3>
+            <p class="ph">单位元，填每档该周期的<b>合计价</b>（3 个月档就填 3 个月一共多少钱）。订阅页大数字按月折算、合计与立省% 自动算。</p>
+            <div class="ptab" id="pt-base"></div>
+            <p class="ph" id="p-state"></p>
+          </div>
+          <div class="cell pcard">
+            <h3>促销</h3>
+            <label class="pm-on"><input type="checkbox" id="pm-on" /> 启用促销</label>
+            <div id="pm-body">
+              <div class="pm-row">
+                <input type="text" id="pm-name" placeholder="活动名（订阅页角标显示），如：国庆 8 折" maxlength="24" />
+                <label class="pm-end">到期日<input type="date" id="pm-end" /></label>
+              </div>
+              <p class="ph">启用后订阅页原价划线、旁边显示促销价。到期日当天仍生效、过后自动恢复原价；留空 = 一直生效，取消勾选即停。</p>
+              <div class="pm-row">
+                <span class="ph">快填折扣</span>
+                <input type="number" id="pm-off" min="0.5" max="9.9" step="0.1" placeholder="8" />
+                <span class="ph">折</span>
+                <button class="btn btn-sm" id="pm-apply" type="button">按原价 × 折扣填入促销价</button>
+              </div>
+              <div class="ptab" id="pt-pm"></div>
+            </div>
+          </div>
+          <div class="psave">
+            <button class="btn btn-primary btn-sm" id="psave" type="button">保存定价</button>
+            <span class="pmsg" id="pmsg"></span>
+            <span class="ph">保存后订阅页刷新即生效</span>
+          </div>
+        </section>
       </div>
 
     </div>
@@ -61,7 +101,7 @@ import { LIC } from "../config";
   <Footer />
 
   <script>
-    // ===== 管理台数据流：POST /admin/users（Bearer ADMIN_KEY）→ 汇总卡 + 用户列表（本机按邮箱筛选） =====
+    // ===== 管理台数据流：用户页签 POST /admin/users；定价页签 GET /pricing 回填 + POST /admin/pricing 保存 =====
     const API = (document.querySelector(".adm") as HTMLElement).dataset.api!;
     const KEY_NAME = "bobo_admin"; // 与用户会话 bobo_token 分开，退出登录不影响管理台
     const TIER_NAME: Record<number, string> = { 0: "V0 基础版", 1: "V1 情报版", 2: "V2 旗舰版" };
@@ -235,7 +275,8 @@ import { LIC } from "../config";
     });
     $("reload").addEventListener("click", async () => {
       $("reload").textContent = "刷新中…";
-      await load();
+      if ($("sec-pricing").hidden) await load();
+      else await loadPricing();
       $("reload").textContent = "刷新";
     });
     $("exit").addEventListener("click", () => {
@@ -244,6 +285,170 @@ import { LIC } from "../config";
       showGate();
     });
     $("retry").addEventListener("click", boot);
+
+    // ===== 定价页签：三档 × 四周期两张表（原价 / 促销价），保存走 POST /admin/pricing =====
+    const TIERS: [string, string][] = [["V0", "基础版"], ["V1", "情报版"], ["V2", "旗舰版"]];
+    const CYCLES: [string, string][] = [["1m", "1 个月"], ["3m", "3 个月"], ["1y", "1 年"], ["life", "终身"]];
+    type Matrix = Record<string, Record<string, number>>;
+    let tablesBuilt = false;
+    let pricingLoaded = false;
+
+    function buildPriceTable(host: HTMLElement) {
+      host.innerHTML =
+        `<table><thead><tr><th></th>${CYCLES.map(([, l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>` +
+        TIERS.map(
+          ([t, n]) =>
+            `<tr><th>${n} ${t}</th>${CYCLES.map(
+              ([c]) => `<td><input type="number" min="0" max="999999" step="0.01" inputmode="decimal" data-k="${t}.${c}" placeholder="—" /></td>`,
+            ).join("")}</tr>`,
+        ).join("") +
+        `</tbody></table>`;
+    }
+
+    function fillMatrix(host: HTMLElement, m: Matrix | null) {
+      host.querySelectorAll<HTMLInputElement>("input").forEach((i) => {
+        const [t, c] = (i.dataset.k ?? "").split(".");
+        const v = m?.[t]?.[c];
+        i.value = typeof v === "number" ? String(v) : "";
+      });
+    }
+
+    /** 全 12 格必填、0–999999、最多两位小数；不合格返回 err */
+    function readMatrix(host: HTMLElement): { m: Matrix | null; err: string | null } {
+      const m: Matrix = {};
+      for (const [t] of TIERS) {
+        m[t] = {};
+        for (const [c] of CYCLES) {
+          const raw = host.querySelector<HTMLInputElement>(`input[data-k="${t}.${c}"]`)?.value.trim() ?? "";
+          if (raw === "") return { m: null, err: "没填全（三档 × 四周期共 12 个价）" };
+          const n = Number(raw);
+          if (!Number.isFinite(n) || n < 0 || n > 999999 || Math.round(n * 100) / 100 !== n)
+            return { m: null, err: "格式不对（0–999999 元，最多两位小数）" };
+          m[t][c] = n;
+        }
+      }
+      return { m, err: null };
+    }
+
+    const pmsg = (text: string, bad = false) => {
+      const el = $("pmsg");
+      el.textContent = text;
+      el.classList.toggle("bad", bad);
+    };
+
+    function setPmBody(on: boolean) {
+      $("pm-body").classList.toggle("dim", !on);
+      $("pm-body").querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button").forEach((el) => (el.disabled = !on));
+    }
+
+    async function loadPricing(): Promise<boolean> {
+      try {
+        const res = await fetch(`${API}/pricing`);
+        const d = await res.json().catch(() => null);
+        if (!res.ok || !d?.ok) throw new Error();
+        pricingLoaded = true;
+        const p = d.pricing; // null = 尚未配置
+        fillMatrix($("pt-base"), p?.prices ?? null);
+        ($("pm-on") as HTMLInputElement).checked = !!p?.promo;
+        setPmBody(!!p?.promo);
+        ($("pm-name") as HTMLInputElement).value = p?.promo?.name ?? "";
+        ($("pm-end") as HTMLInputElement).value = p?.promo?.ends_at ?? "";
+        fillMatrix($("pt-pm"), p?.promo?.prices ?? null);
+        $("p-state").textContent = p
+          ? `已配置 · 更新于 ${String(p.updated_at ?? "").slice(0, 10)}${
+              p.promo ? (p.promo_active ? ` · 促销生效中（${p.promo.name}）` : " · 促销未生效（已到期）") : ""
+            }`
+          : "尚未配置 —— 填好 12 个价格保存后，订阅页即显示正式价（此前维持占位数字）";
+        return true;
+      } catch {
+        $("p-state").textContent = "定价拉取失败，点右上「刷新」重试。";
+        return false;
+      }
+    }
+
+    function showTab(which: "users" | "pricing") {
+      $("tab-users").classList.toggle("on", which === "users");
+      $("tab-pricing").classList.toggle("on", which === "pricing");
+      $("sec-users").hidden = which !== "users";
+      $("sec-pricing").hidden = which !== "pricing";
+    }
+
+    $("tab-users").addEventListener("click", () => showTab("users"));
+    $("tab-pricing").addEventListener("click", async () => {
+      showTab("pricing");
+      if (!tablesBuilt) {
+        buildPriceTable($("pt-base"));
+        buildPriceTable($("pt-pm"));
+        tablesBuilt = true;
+      }
+      if (!pricingLoaded) await loadPricing();
+    });
+    $("pm-on").addEventListener("change", (e) => setPmBody((e.target as HTMLInputElement).checked));
+
+    // 快填：原价 × 折扣（8 = 八折）四舍五入到整数，填完可手改个别档位
+    $("pm-apply").addEventListener("click", () => {
+      const off = Number(($("pm-off") as HTMLInputElement).value);
+      if (!Number.isFinite(off) || off <= 0 || off >= 10) {
+        pmsg("折扣填 0.5–9.9，比如 8 = 八折", true);
+        return;
+      }
+      for (const [t] of TIERS)
+        for (const [c] of CYCLES) {
+          const b = Number($("pt-base").querySelector<HTMLInputElement>(`input[data-k="${t}.${c}"]`)?.value ?? "");
+          const el = $("pt-pm").querySelector<HTMLInputElement>(`input[data-k="${t}.${c}"]`);
+          if (el && Number.isFinite(b) && b > 0) el.value = String(Math.round((b * off) / 10));
+        }
+    });
+
+    $("psave").addEventListener("click", async () => {
+      const base = readMatrix($("pt-base"));
+      if (base.err || !base.m) {
+        pmsg(`原价${base.err}`, true);
+        return;
+      }
+      const body: { prices: Matrix; promo: { name: string; prices: Matrix; ends_at: string } | null } = { prices: base.m, promo: null };
+      if (($("pm-on") as HTMLInputElement).checked) {
+        const pm = readMatrix($("pt-pm"));
+        if (pm.err || !pm.m) {
+          pmsg(`促销价${pm.err}`, true);
+          return;
+        }
+        const name = ($("pm-name") as HTMLInputElement).value.trim();
+        if (!name) {
+          pmsg("促销还差活动名（订阅页角标显示它）", true);
+          return;
+        }
+        body.promo = { name, prices: pm.m, ends_at: ($("pm-end") as HTMLInputElement).value };
+      }
+      const btn = $("psave") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "保存中…";
+      try {
+        const res = await fetch(`${API}/admin/pricing`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem(KEY_NAME)}`, "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const d = await res.json().catch(() => null);
+        if (res.status === 401) {
+          // 密钥失效：恢复按钮再退回密钥门（下次进来按钮是可点的）
+          btn.disabled = false;
+          btn.textContent = "保存定价";
+          localStorage.removeItem(KEY_NAME);
+          data = null;
+          showGate();
+          return;
+        }
+        if (res.ok && d?.ok) {
+          pmsg("已保存 ✓ 订阅页刷新即生效");
+          await loadPricing();
+        } else pmsg(`保存失败（${d?.error ?? "网络异常"}）`, true);
+      } catch {
+        pmsg("网络异常，稍后再试", true);
+      }
+      btn.disabled = false;
+      btn.textContent = "保存定价";
+    });
 
     await boot();
   </script>
@@ -273,12 +478,49 @@ import { LIC } from "../config";
 
   /* ============ 工具条 ============ */
   .bar { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-  .bar input {
-    flex: 1; min-width: 180px; max-width: 300px; padding: 9px 14px; border-radius: 12px;
+  .usearch {
+    display: block; width: 100%; max-width: 320px; margin-bottom: 14px; padding: 9px 14px; border-radius: 12px;
     border: 1px solid color-mix(in oklab, var(--ink-1) 14%, transparent); background: var(--bg); font-size: 0.92rem; color: var(--ink-1); outline: none;
   }
-  .bar input:focus { border-color: var(--blue); }
+  .usearch:focus { border-color: var(--blue); }
   .upd { color: var(--ink-3); font-size: 0.82rem; margin-right: auto; }
+
+  /* ============ 页签 ============ */
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid color-mix(in oklab, var(--ink-1) 14%, transparent); border-radius: 13px; background: var(--s1); }
+  .tab { border: none; background: none; cursor: pointer; font-size: 0.86rem; font-weight: 660; color: var(--ink-2); padding: 7px 16px; border-radius: 9px; transition: color 0.2s, background 0.2s; }
+  .tab.on { color: #fff; background: linear-gradient(135deg, var(--blue-2), var(--blue-deep)); }
+
+  /* ============ 定价编辑 ============ */
+  #sec-pricing { display: flex; flex-direction: column; gap: 12px; animation: rise 0.6s 0.12s var(--ease) both; }
+  .pcard { padding: 18px 20px; }
+  .pcard h3 { font-size: 1.02rem; font-weight: 740; }
+  .ph { font-size: 0.8rem; color: var(--ink-3); font-weight: 500; line-height: 1.7; }
+  .ph b { color: var(--ink-2); font-weight: 650; }
+  .ptab { overflow-x: auto; margin-top: 10px; }
+  .ptab table { border-collapse: collapse; min-width: 520px; width: 100%; }
+  .ptab th, .ptab td { padding: 5px 8px; text-align: left; font-size: 0.85rem; color: var(--ink-2); white-space: nowrap; }
+  .ptab thead th { color: var(--ink-3); font-size: 0.78rem; font-weight: 620; }
+  .ptab tbody th { font-weight: 660; color: var(--ink-1); }
+  .ptab input {
+    width: 92px; padding: 8px 10px; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--ink-1) 16%, transparent);
+    background: var(--bg); font-size: 0.9rem; color: var(--ink-1); outline: none; font-variant-numeric: tabular-nums;
+  }
+  .ptab input:focus { border-color: var(--blue); }
+  .pm-on { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.92rem; font-weight: 650; color: var(--ink-1); cursor: pointer; }
+  .pm-on input { width: 16px; height: 16px; accent-color: var(--blue); }
+  #pm-body.dim { opacity: 0.45; }
+  .pm-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .pm-row input {
+    padding: 8px 12px; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--ink-1) 16%, transparent);
+    background: var(--bg); font-size: 0.9rem; color: var(--ink-1); outline: none;
+  }
+  .pm-row input:focus { border-color: var(--blue); }
+  #pm-name { flex: 1; min-width: 200px; }
+  #pm-off { width: 64px; }
+  .pm-end { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--ink-2); white-space: nowrap; }
+  .psave { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pmsg { font-size: 0.86rem; font-weight: 620; color: var(--green); }
+  .pmsg.bad { color: var(--red); }
 
   /* ============ 汇总卡 ============ */
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); margin-bottom: var(--gap); animation: rise 0.6s 0.06s var(--ease) both; }
