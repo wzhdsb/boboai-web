@@ -2,10 +2,13 @@
 interface Props {
   title: string;
   description?: string;
+  /** manifest = 挂 PWA 清单（仅 /app 用：装成桌面应用后独立窗口打开行情页，官网其余页面不提供安装） */
+  manifest?: boolean;
 }
 const {
   title,
   description = "BOBO AI 助理 — 住进手机里的 AI 助理。GLM 大模型驱动：AI 对话、实时行情、消息面日报、博主情报。",
+  manifest = false,
 } = Astro.props;
 ---
 <!doctype html>
@@ -17,6 +20,9 @@ const {
     <meta name="theme-color" content="#f7f6f3" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon-96.png" />
+    {manifest && <link rel="manifest" href="/manifest.webmanifest" />}
+    {manifest && <meta name="application-name" content="BOBO" />}
     <title>{title}</title>
   </head>
   <body>

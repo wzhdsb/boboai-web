@@ -1,0 +1,16 @@
+{
+  "name": "BOBO AI 助理",
+  "short_name": "BOBO",
+  "description": "BOBO AI 助理网页版：界面从官网加载，数据由本机本地大脑提供。",
+  "id": "/app/",
+  "start_url": "/app/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f3",
+  "theme_color": "#f7f6f3",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

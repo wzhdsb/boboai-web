@@ -1,0 +1,95 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+// 隐私政策（2026-08-30 首版）：Microsoft Store 提交表单硬需求（收集信息须给 URL），
+// 也是给用户的一句实话：本地优先——能不上云的都在你机器上。
+// TODO 联系邮箱目前占位，站长补真实邮箱后部署。
+---
+
+<Layout
+  title="隐私政策 — BOBO AI 助理"
+  description="boboai 隐私政策：本地优先——行情与自选数据全在你自己的设备上，能不上云的我们就不拿走。"
+>
+  <Nav />
+  <main class="pv">
+    <div class="wrap">
+      <div class="page-head">
+        <span class="eyebrow">Privacy</span>
+        <h1>隐私政策</h1>
+        <p class="sec-sub">生效日期 2026-08-30 · 一句话版本：能放在你设备上的，我们就不拿走。</p>
+      </div>
+
+      <div class="cells">
+        <section class="cell">
+          <h2>本地优先原则</h2>
+          <p>boboai 的核心设计是「本地大脑」：行情数据由<strong>你自己的设备</strong>直接向公开行情源发起请求并计算，自选清单、配置等全部落在本地文件里。我们的服务器不经手、不存储、不转发这些数据。</p>
+        </section>
+
+        <section class="cell">
+          <h2>网站（boboai.tech）</h2>
+          <p>网站由 Cloudflare 边缘分发，其访问日志（IP、User-Agent 等网络层信息）仅用于安全防护与聚合统计，不与任何账号身份关联。网站不使用第三方统计、广告 SDK 或跨站追踪。</p>
+        </section>
+
+        <section class="cell">
+          <h2>桌面本地大脑（Windows）</h2>
+          <ul>
+            <li>行情请求由本机直接发往公开行情接口（腾讯/新浪），响应在本机解析；</li>
+            <li>自选清单、设置保存在本机用户目录（<code>~/.boboai/</code>），卸载应用后可自行删除；</li>
+            <li>本地服务只监听 <code>127.0.0.1</code>（本机回环），不对外网开放端口。</li>
+          </ul>
+        </section>
+
+        <section class="cell">
+          <h2>安卓 App 与 AI 能力</h2>
+          <ul>
+            <li>对话、设置、自选等数据保存在应用本机存储，提供本地备份文件，不上传；</li>
+            <li>使用 AI 视觉/对话功能时，相关内容（屏幕图像、文字）会发送至智谱 GLM 服务用于处理——这是功能的必要环节；</li>
+            <li>激活校验时，设备识别码发送至我们的激活服务（lic.boboai.tech），仅用于验证授权状态。</li>
+          </ul>
+        </section>
+
+        <section class="cell">
+          <h2>你的控制权</h2>
+          <ul>
+            <li>卸载即清：删除 App / 本地大脑后，本机数据随目录移除；</li>
+            <li>不注册、不登录也能使用网页基础功能——无账号即无账号数据；</li>
+            <li>如需删除与激活相关的记录，联系我们即可处理。</li>
+          </ul>
+        </section>
+
+        <section class="cell">
+          <h2>联系与更新</h2>
+          <p>政策如有实质变更会在本页更新日期。联系邮箱：<code>i@boboai.tech</code>。</p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .pv { padding: 48px 0 80px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 22px; }
+  .page-head { margin-bottom: 28px; }
+  /* eyebrow 复用 Layout 全局样式（带渐变短横线），不本地重定义 */
+  .page-head h1 { font-size: clamp(1.6rem, 3vw, 2.05rem); letter-spacing: -0.01em; margin-top: 12px; font-weight: 780; }
+  .sec-sub { color: var(--ink-3); margin-top: 8px; }
+
+  .cells { display: grid; gap: var(--gap); }
+  .cell {
+    background: var(--s1); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: 22px 24px;
+  }
+  /* 静态政策文本卡不吃全局 .cell:hover 的抬升——那暗示可点击（.pv 前缀提特异性稳压全局） */
+  .pv .cell:hover { transform: none; box-shadow: none; border-color: var(--line); }
+  .cell h2 { font-size: 1.02rem; font-weight: 700; margin-bottom: 10px; }
+  .cell p { color: var(--ink-2); font-size: 0.92rem; }
+  .cell ul { padding-left: 1.15em; color: var(--ink-2); font-size: 0.92rem; display: grid; gap: 6px; }
+  .cell strong { color: var(--ink-1); }
+  .cell code {
+    font-family: var(--mono); font-size: 0.84em;
+    background: var(--s3); border-radius: 5px; padding: 1px 6px;
+  }
+</style>

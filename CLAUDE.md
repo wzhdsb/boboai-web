@@ -38,6 +38,8 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 交互全部零 JS：折叠用原生 `<details>`，切换用 CSS radio + 兄弟选择器（登录 tab、周期×价格联动）。新增交互先想纯 CSS 方案。
 
+**零 JS 约定唯一豁免（2026-08-30）**：`src/pages/app.astro`（网页版本地大脑页）带一个客户端脚本——fetch 用户本机 daemon（地址见 `config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停（学 App 的 onPause 思路）。这是产品形态决定的（数据在用户机器上，静态站拿不到），不是风格松动：其余页面继续零 JS，新增页面不得效仿，除非同样连的是用户本机资源。
+
 **发新版本流程**：改 `src/config.ts`（VERSION/VCODE/SHA256）→ 按上面 curl 命令拉新 APK（文件名随版本变）→ pricing 价格如有调整同步 `PRICES`。
 
 **已知占位**（代码内有 TODO 注释，待后端/定价就绪替换）：订阅页全部价格与折扣角标、用户中心用户/订阅/订单数据、登录表单接口与协议链接、主页二维码图案（现为手绘占位，正式版换指向 `APK` 直链的真码）。App 侧订阅后端在 `lic.boboai.tech`，网站账号体系后续对接。

@@ -1,0 +1,427 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Aurora from "../components/Aurora.astro";
+import { DAEMON, DAEMON_SETUP_DL, DAEMON_SETUP_MIRROR, DAEMON_SETUP_GITHUB, DAEMON_ZIP_MIRROR, DAEMON_ZIP_GITHUB } from "../config";
+
+// 网页版本地模式：页面（CDN）+ 本机 daemon（数据）——本页是全站唯一带客户端脚本的页面
+// （fetch 本机 daemon 拉 + 轮询行情，见 CLAUDE.md 豁免注记）。DAEMON 地址收敛在 config.ts，
+// 竖切③证书签好后切 https://local.boboai.tech（Chrome 对 127.0.0.1 混合内容有豁免，当前直连可用）。
+---
+<Layout
+  title="网页版 — BOBO AI 助理"
+  description="BOBO AI 助理网页版：页面从官网加载，行情数据由你电脑上的本地大脑（boboai daemon）直接提供，不经过任何服务器。"
+  manifest
+>
+  <Aurora strength="soft" />
+  <Nav variant="sub" />
+
+  <!-- 本页新增图标（与全局雪碧图同风格：24 视窗 / stroke 1.7 / round cap） -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-pc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12.5" rx="2.2"/><path d="M12 17v3M8.5 20.5h7M10 10.8h.01M12 10.8h.01M14 10.8h.01"/></symbol>
+  </svg>
+
+  <main class="app-page">
+    <div class="wrap">
+      <div class="page-head">
+        <span class="eyebrow">Local Brain</span>
+        <h1>网页版 · 本地大脑</h1>
+        <p class="sec-sub">这个页面从官网加载，行情数据则由<b>你电脑上的 boboai daemon</b> 直接提供——请求不出你的机器，云端零后端。自选清单与手机 App 相互独立。</p>
+      </div>
+
+      <!-- 本地大脑生命周期卡：状态检测 / 安装 / 进度 / 卸载 全在这张卡上 -->
+      <section class="cell brain-card" id="brain-card" data-daemon={DAEMON}>
+        <div class="bc-head">
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-pc" /></svg></span>
+          <h3>本地大脑 <span class="brain-st" id="brain-st"><i></i><b>检测中…</b></span></h3>
+          <div class="bc-side">
+            <label class="autostart" id="autostart-wrap" hidden title="重启电脑后本地大脑自动在线（关闭后 daemon 不再写回）">
+              <input type="checkbox" id="autostart-chk" /><i></i><span id="autostart-txt">开机自启</span>
+            </label>
+            <button class="btn btn-ghost btn-sm st-un" id="st-un" type="button" hidden title="停后台进程、清自启项、删安装目录">卸载</button>
+            <span class="st-time" id="st-time"></span>
+          </div>
+        </div>
+
+        <div class="bc-body" id="bc-body">
+          <!-- 态：未安装 -->
+          <div id="st-offline" hidden>
+            <p class="bc-line">官网出界面，你的电脑出数据。</p>
+            <button class="btn btn-primary dl-btn" id="setup-btn" type="button" data-dl={DAEMON_SETUP_DL}>
+              <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>一键安装（Windows · 46MB）
+            </button>
+          </div>
+
+          <!-- 态：下载中 → 落盘（气泡自动弹出）→ 等装完上线 -->
+          <div id="st-install" hidden>
+            <div class="prog"><div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div></div>
+            <p class="prog-txt" id="prog-txt">准备下载…</p>
+          </div>
+
+        <details class="adv" id="adv">
+          <summary>高级：手动 zip · 装在哪 · 数据链路</summary>
+          <div class="adv-body">
+            <p><b>手动 zip</b>：<a href={DAEMON_ZIP_GITHUB} download>GitHub 直连</a> · <a href={DAEMON_ZIP_MIRROR} download>ghfast 镜像</a>（镜像域名可能被浏览器误标「危险」，属误报）——解压后双击 <code>boboai-daemon.exe</code>。</p>
+            <p><b>装在哪</b>：<code>C:\Users\&lt;你&gt;\AppData\Local\boboai\</code>；卸载也可走系统「设置 → 应用」搜 boboai。</p>
+            <p><b>数据链路</b>：浏览器 → 本机 daemon（127.0.0.1）→ 行情源。全程不经过 boboai 的任何服务器。</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- 行情网格（daemon 在线时由脚本填充） -->
+      <section class="quotes" id="quotes" hidden aria-live="polite">
+        <div class="q-grid" id="q-grid"></div>
+        <p class="q-note">自选清单存在你的电脑上（~/.boboai/daemon/watchlist.json），网页端编辑入口下期开放 · 美股价格当前来自腾讯快照（2 位小数），与 App 的东财 3 位口径存在显示差</p>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+
+  <script>
+    // ===== 网页版唯一客户端脚本：本地大脑生命周期卡（检测/安装/卸载）+ 行情轮询 =====
+    const DAEMON = (document.getElementById("brain-card") as HTMLElement).dataset.daemon!;
+    const POLL_MS = 10_000;
+
+    const el = {
+      brainI: document.querySelector("#brain-st i")!,
+      brainB: document.querySelector("#brain-st b")!,
+      autostartWrap: document.getElementById("autostart-wrap")!,
+      autostartChk: document.getElementById("autostart-chk") as HTMLInputElement,
+      autostartTxt: document.getElementById("autostart-txt")!,
+      un: document.getElementById("st-un") as HTMLButtonElement,
+      time: document.getElementById("st-time")!,
+      body: document.getElementById("bc-body")!,
+      offline: document.getElementById("st-offline")!,
+      install: document.getElementById("st-install")!,
+      fill: document.getElementById("prog-fill")!,
+      txt: document.getElementById("prog-txt")!,
+      adv: document.getElementById("adv")!,
+      quotes: document.getElementById("quotes")!,
+      grid: document.getElementById("q-grid")!,
+      setup: document.getElementById("setup-btn") as HTMLButtonElement,
+    };
+
+    type Phase = "probe" | "off" | "dl" | "ready" | "on" | "un";
+    function brainPhase(p: Phase) {
+      el.brainI.className = p;
+      el.brainB.textContent =
+        ({ probe: "检测中…", off: "未安装", dl: "下载中", ready: "待安装", on: "在线", un: "正在卸载" } as Record<Phase, string>)[p];
+    }
+
+    let uninstalling = false;
+    let fastPoll = false;
+
+    /** 同源反代流式下载（进度条真数据），完成自动落盘并亮出「开始安装」。 */
+    async function startInstall() {
+      el.offline.hidden = true;
+      el.install.hidden = false;
+      el.fill.style.width = "0%";
+      el.txt.textContent = "准备下载…";
+      brainPhase("dl");
+      try {
+        const res = await fetch(el.setup.dataset.dl!);
+        if (!res.ok || !res.body) throw new Error(String(res.status));
+        const total = Number(res.headers.get("content-length") || 0);
+        const reader = res.body.getReader();
+        const chunks: BlobPart[] = [];
+        let got = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value as BlobPart);
+          got += value.length;
+          if (total) {
+            el.fill.style.width = Math.min(99, (got / total) * 100).toFixed(1) + "%";
+            el.txt.textContent = `正在下载 ${(got / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB`;
+          }
+        }
+        // 下载完成立即落盘：浏览器下载气泡自动弹出，exe 和「打开」就在眼前——
+        // 剩下的「打开」（Chrome 硬性人手确认）与 SmartScreen 是纯网页流程的物理极限
+        const url = URL.createObjectURL(new Blob(chunks));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "boboai-setup.exe";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 120_000);
+        el.fill.style.width = "100%";
+        el.txt.textContent = "下载完成——在弹出的下载气泡里点「打开」，蓝色确认框点「仍要运行」，之后全自动";
+        brainPhase("ready");
+        fastPoll = true;
+      } catch {
+        el.install.hidden = true;
+        el.offline.hidden = false;
+        brainPhase("off");
+        el.txt.textContent = "下载失败——稍后再试，或展开「高级」用手动 zip";
+      }
+    }
+
+    // 卸载：daemon 自己拉起 Inno 卸载器（停进程+清自启+删目录），网页等它熄灭
+    el.un.addEventListener("click", async () => {
+      el.un.disabled = true;
+      uninstalling = true;
+      brainPhase("un");
+      try { await fetch(`${DAEMON}/api/uninstall`, { method: "POST" }); } catch { /* 等轮询确认熄灭 */ }
+      fastPoll = true;
+    });
+
+    // ===== 开机自启开关：daemon 的 HKCU Run 键读写全在网页上操作（0.2.1 产品形态：隐形后台服务）。
+    // 0.2.3 起 supported=false = 商店版（MSIX）：Run 键在容器内失效，自启由系统的 startupTask
+    // 管——开关换成提示文案并禁用，别假装能切；卸载钮也藏（WindowsApps 目录不可手删，
+    // 商店版卸载走 设置→应用，daemon 的 /api/uninstall 指引反而误导）。旧版 daemon 无此字段。 =====
+    let autoLoaded = false;
+    let autostartMsix = false;
+    async function loadAutostart() {
+      try {
+        const d = await (await fetch(`${DAEMON}/api/autostart`)).json();
+        autostartMsix = d.supported === false;
+        el.autostartChk.disabled = autostartMsix;
+        el.autostartTxt.textContent = autostartMsix ? "自启 · 见任务管理器" : "开机自启";
+        el.autostartWrap.title = autostartMsix
+          ? "商店版：在 任务管理器 → 启动应用 里开关 boboai"
+          : "重启电脑后本地大脑自动在线（关闭后 daemon 不再写回）";
+        el.autostartChk.checked = !!d.enabled;
+        el.autostartWrap.hidden = false;
+        if (autostartMsix) el.un.hidden = true;   // loadAutostart 晚于 applyState，补一刀
+        autoLoaded = true;
+      } catch { /* daemon 掉线，tick 会再触发 */ }
+    }
+    el.autostartChk.addEventListener("change", async () => {
+      try {
+        const d = await (
+          await fetch(`${DAEMON}/api/autostart`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: el.autostartChk.checked }),
+          })
+        ).json();
+        el.autostartChk.checked = !!d.enabled;   // 以 daemon 实际结果为准
+      } catch {
+        await loadAutostart();   // 失败回读真实状态
+      }
+    });
+
+    type Row = {
+      code: string; name: string; price: string; chg: string; pct: number;
+      open?: number | null; preClose?: number | null; high?: number | null; low?: number | null;
+      amount?: number | null; turnoverRate?: number | null; pe?: number | null;
+      decimals: number; isFull?: boolean; fund?: boolean;
+    };
+
+    const esc = (s: string) =>
+      s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
+    const num = (v: number | null | undefined, d = 2, dash = "—") =>
+      v == null || Number.isNaN(v) ? dash : v.toFixed(d);
+
+    // 成交额归亿：A股/指数口径万元，港美股原币种（QuoteRow.amount 注释约定）
+    const yi = (v: number | null | undefined, isFull?: boolean) =>
+      v == null ? "—" : ((isFull ? v / 1e4 : v / 1e8).toFixed(2) + " 亿");
+
+    const cls = (pct: number) => (pct > 0 ? "up" : pct < 0 ? "down" : "flat");
+
+    function render(rows: Row[]) {
+      if (!rows.length) {
+        el.grid.innerHTML = `<p class="q-empty">自选清单是空的——往 ~/.boboai/daemon/watchlist.json 里加几条（如 {"code":"sh600519"}），10 秒内自动出现</p>`;
+        return;
+      }
+      el.grid.innerHTML = rows
+        .map((r) => {
+          const c = cls(r.pct);
+          const isFund = !!r.fund;
+          const price = num(parseFloat(r.price), r.decimals);
+          const chg = parseFloat(r.chg);
+          const chgTxt = Number.isNaN(chg) ? "—" : (chg >= 0 ? "+" : "") + chg.toFixed(r.decimals);
+          const pctTxt = (r.pct >= 0 ? "+" : "") + r.pct.toFixed(2) + "%";
+          return `<article class="q-card ${c}">
+            <div class="q-top">
+              <span class="q-name">${esc(r.name)}</span>
+              <span class="q-code">${esc(r.code)}${isFund ? " · 基金" : ""}</span>
+            </div>
+            <div class="q-main">
+              <span class="q-price">${price}</span>
+              <span class="q-chg">${chgTxt}<b>${pctTxt}</b></span>
+            </div>
+            <dl class="q-stats">
+              <div><dt>今开</dt><dd>${num(r.open, r.decimals)}</dd></div>
+              <div><dt>最高</dt><dd>${num(r.high, r.decimals)}</dd></div>
+              <div><dt>最低</dt><dd>${num(r.low, r.decimals)}</dd></div>
+              <div><dt>昨收</dt><dd>${num(r.preClose, r.decimals)}</dd></div>
+              <div><dt>成交额</dt><dd>${yi(r.amount, r.isFull)}</dd></div>
+            </dl>
+          </article>`;
+        })
+        .join("");
+    }
+
+    /** 在线/离线落卡：在线=收成一条（body/adv 藏，右侧控件亮）；离线=出安装入口。
+     *  商店版（MSIX）无卸载钮——系统入口卸载，网页指引反而误导。 */
+    function applyState(on: boolean) {
+      el.body.hidden = on;
+      el.adv.hidden = on;
+      el.un.hidden = !on || autostartMsix;
+      el.quotes.hidden = !on;
+      if (on) {
+        brainPhase("on");
+        el.offline.hidden = true;
+        el.install.hidden = true;
+        if (!autoLoaded) void loadAutostart();
+      } else {
+        el.time.textContent = "";
+        el.autostartWrap.hidden = true;
+        autoLoaded = false;
+        el.un.disabled = false;
+        // 卸载流程：保持「正在卸载」直到熄灭回未安装；安装流程进行中不打断
+        if (uninstalling) brainPhase("un");
+        else if (el.install.hidden) { el.offline.hidden = false; brainPhase("off"); }
+      }
+    }
+
+    const clock = () => new Date().toLocaleTimeString("zh-CN", { hour12: false });
+
+    // ===== 心跳与数据分离：healthz 毫秒级定状态（首开不等行情源），行情另行慢拉 =====
+    async function probe(): Promise<boolean> {
+      try {
+        const r = await fetch(`${DAEMON}/healthz`, { signal: AbortSignal.timeout(2500) });
+        return r.ok;
+      } catch { return false; }
+    }
+    async function loadQuotes() {
+      try {
+        const r = await fetch(`${DAEMON}/api/quotes`, { signal: AbortSignal.timeout(8000) });
+        const d = await r.json();
+        if (d.ok) {
+          render(d.rows as Row[]);
+          el.time.textContent = `最后刷新 ${clock()}`;
+        }
+      } catch { /* 下轮再试 */ }
+    }
+    async function tick() {
+      const on = await probe();
+      if (on) { uninstalling = false; fastPoll = false; }
+      applyState(on);
+      if (on) void loadQuotes();
+    }
+
+    // 页面可见才轮询（学 App 的 onPause 思路，隐藏页不空烧）；安装/卸载等待期切 3 秒快档
+    let timer = 0;
+    function schedule() {
+      clearTimeout(timer);
+      timer = window.setTimeout(async () => { await tick(); schedule(); }, fastPoll ? 3000 : POLL_MS);
+    }
+    const start = () => { if (!timer) void schedule(); };
+    const stop = () => { clearTimeout(timer); timer = 0; };
+    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+    el.setup.addEventListener("click", () => void startInstall());
+    start();
+  </script>
+</Layout>
+
+<style>
+  .app-page { min-height: calc(100vh - 62px - 180px); padding-bottom: 40px; }
+  .page-head { margin: 54px 0 26px; }
+  .page-head h1 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); font-weight: 780; letter-spacing: -0.01em; margin-top: 12px; }
+  .page-head .sec-sub b { color: var(--ink-1); }
+
+  /* ---- 本地大脑生命周期卡（状态/安装/进度/卸载 一张卡） ---- */
+  .brain-card { padding: 16px 20px 14px; margin-bottom: 20px; max-width: 720px; }
+  .bc-head { display: flex; align-items: center; gap: 12px; }
+  .bc-head .ico {
+    width: 38px; height: 38px; border-radius: 12px; flex: none;
+    background: var(--s3); border: 1px solid var(--line);
+    display: grid; place-items: center; color: var(--blue-2);
+  }
+  .bc-head .ico .ic { width: 20px; height: 20px; }
+  .bc-head h3 { margin: 0; font-size: 1.02rem; font-weight: 730; }
+  .bc-side { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .st-time { font-size: 0.8rem; color: var(--ink-3); font-family: var(--mono); }
+  .bc-body { margin-top: 4px; }
+  .bc-line { margin: 10px 0 12px; font-size: 0.92rem; color: var(--ink-2); }
+
+  /* ---- 开机自启开关（在线时出现在卡头右侧） ---- */
+  .autostart { display: inline-flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--ink-3); cursor: pointer; user-select: none; }
+  .autostart input { position: absolute; opacity: 0; }
+  .autostart i {
+    width: 30px; height: 17px; border-radius: 999px; background: var(--s3);
+    border: 1px solid var(--line-strong); position: relative; transition: background 0.2s;
+  }
+  .autostart i::after {
+    content: ""; position: absolute; top: 1.5px; left: 2px; width: 12px; height: 12px;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(20, 28, 45, 0.25);
+    transition: left 0.2s var(--ease);
+  }
+  .autostart input:checked + i { background: var(--green); border-color: var(--green); }
+  .autostart input:checked + i::after { left: 14px; }
+  .autostart input:focus-visible + i { outline: 2px solid var(--blue-2); outline-offset: 2px; }
+  /* 商店版（MSIX）：开关不可用——整包（文字+轨道）同步降到 0.75 才像「禁用」，
+     单压轨道会淡成 0.34 像"残影"。窄屏卡头放不下长文案时允许换行。 */
+  .autostart:has(input:disabled) { cursor: default; opacity: 0.75; }
+  @media (max-width: 639px) {
+    .bc-side { flex-wrap: wrap; justify-content: flex-end; }
+    .st-time { display: none; }
+  }
+
+  .brain-card .dl-btn { margin: 6px 0 0; }
+  .brain-card .steps { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 10px; font-size: 0.9rem; }
+  .brain-card code { font-family: var(--mono); font-size: 0.82em; background: var(--s3); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; }
+
+  /* ---- 状态点六态：检测灰 / 未装红 / 下载蓝 / 待装金 / 在线绿 / 卸载金 ---- */
+  .brain-st { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; vertical-align: 2px; margin-left: 8px; }
+  .brain-st i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+  .brain-st i.off { background: var(--red); }
+  .brain-st i.dl { background: var(--blue-2); animation: pulse-dot 1.2s infinite; }
+  .brain-st i.ready, .brain-st i.un { background: var(--gold); animation: pulse-dot 1.6s infinite; }
+  .brain-st i.on { background: var(--green); animation: pulse-ring 2.2s infinite; }
+  @keyframes pulse-dot { 50% { opacity: 0.35; } }
+  @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(10, 129, 10, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(10, 129, 10, 0); } 100% { box-shadow: 0 0 0 0 rgba(10, 129, 10, 0); } }
+
+  /* ---- 进度条（灰底轨道 + 渐变推进） ---- */
+  .prog { margin: 14px 0 6px; }
+  .prog-bar {
+    height: 10px; border-radius: 999px; background: var(--s3);
+    border: 1px solid var(--line); overflow: hidden;   /* 灰底轨道 */
+  }
+  .prog-fill {
+    height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--blue-2), var(--violet));
+    transition: width 0.25s var(--ease);
+  }
+  .prog-txt { font-size: 0.82rem; color: var(--ink-2); font-family: var(--mono); margin: 0 0 10px; }
+  .st-un { padding: 6px 14px; font-size: 0.8rem; flex: none; }
+  .st-un:hover { color: var(--red); border-color: var(--red); }
+
+  /* ---- 高级折叠区 ---- */
+  .adv { margin-top: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: 10px 14px; }
+  .adv summary { cursor: pointer; font-size: 0.84rem; color: var(--ink-3); user-select: none; }
+  .adv summary:hover { color: var(--ink-2); }
+  .adv-body { margin-top: 10px; display: grid; gap: 8px; }
+  .adv-body p { font-size: 0.84rem; color: var(--ink-2); margin: 0; }
+  .adv-body a { color: var(--blue-2); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---- 行情网格 ---- */
+  .q-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: var(--gap); }
+  .q-card {
+    border: 1px solid var(--line); border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 8px 24px rgba(20, 28, 45, 0.05);
+    padding: 18px 20px 16px;
+    transition: transform 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s;
+  }
+  .q-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 4px 10px rgba(20, 28, 45, 0.05), 0 18px 38px rgba(20, 28, 45, 0.1); }
+  .q-top { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+  .q-name { font-weight: 730; font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-code { font-size: 0.74rem; color: var(--ink-3); font-family: var(--mono); margin-left: auto; flex: none; }
+  .q-main { display: flex; align-items: baseline; gap: 12px; margin: 9px 0 12px; }
+  .q-price { font-family: var(--mono); font-size: 1.62rem; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+  .q-chg { font-family: var(--mono); font-size: 0.86rem; display: inline-flex; gap: 7px; }
+  .q-chg b { font-weight: 650; }
+  .q-card.up .q-price, .q-card.up .q-chg { color: var(--red); }
+  .q-card.down .q-price, .q-card.down .q-chg { color: var(--green); }
+  .q-card.flat .q-price, .q-card.flat .q-chg { color: var(--ink-2); }
+  .q-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; border-top: 1px dashed var(--line-strong); padding-top: 11px; }
+  .q-stats dt { font-size: 0.68rem; color: var(--ink-3); letter-spacing: 0.06em; }
+  .q-stats dd { font-size: 0.78rem; font-family: var(--mono); color: var(--ink-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .q-empty { grid-column: 1 / -1; color: var(--ink-3); font-size: 0.9rem; padding: 30px 0; text-align: center; }
+  .q-note { margin-top: 22px; font-size: 0.78rem; color: var(--ink-3); }
+</style>

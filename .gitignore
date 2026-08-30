@@ -6,8 +6,14 @@ dist/
 # APK 直链产物（17MB 二进制，不进 git；获取命令见 CLAUDE.md）
 public/apk/
 
+# 网页版本地大脑安装包（71MB，jpackage 产物，构建方式见主仓 daemon 模块）
+public/daemon/
+
 # dependencies
 node_modules/
+
+# cloudflare wrangler 本地缓存
+.wrangler/
 
 # logs
 npm-debug.log*
