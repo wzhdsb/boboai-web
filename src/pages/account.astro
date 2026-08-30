@@ -44,6 +44,16 @@ import { APK, LIC } from "../config";
         </div>
       </div>
 
+      <!-- 网络异常兜底（区别于未登录：本地 token 保留，重试即可，别把人登出） -->
+      <div class="gate" id="lerr" hidden>
+        <div class="cell gate-card">
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cloud" /></svg></span>
+          <h3>网络异常，账号信息没拉到</h3>
+          <p>登录状态还在，多半是线路不稳——重试一下就好。</p>
+          <button class="btn btn-primary btn-sm" id="retry" type="button">重试</button>
+        </div>
+      </div>
+
       <div class="acct-inner" id="acct">
 
         <div class="page-head">
@@ -196,9 +206,9 @@ import { APK, LIC } from "../config";
     }
 
     function showGate() {
-      localStorage.removeItem(TOKEN_KEY);
       $("gate").hidden = false;
       $("acct").hidden = true;
+      $("lerr").hidden = true;
     }
 
     /** 订阅状态：取生效中到期最晚的一条；没有生效中则显示最近一条的终态 */
@@ -297,22 +307,40 @@ import { APK, LIC } from "../config";
         : `<p class="rec-empty">还没有绑定激活码——购买后在上方输入框绑进来，App 里激活同一个码即可。</p>`;
     }
 
-    async function loadMe(): Promise<boolean> {
+    /** 拉取三态：ok 成功 / unauth token 失效（清掉引导重登）/ err 网络或服务异常（token 保留可重试） */
+    async function loadMe(): Promise<"ok" | "unauth" | "err"> {
       try {
         const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
-        if (res.status === 401) return false;
-        const d = await res.json();
-        if (!res.ok || !d.ok) return false;
+        if (res.status === 401 || res.status === 403) return "unauth";
+        const d = await res.json().catch(() => null);
+        if (!res.ok || !d?.ok) return "err";
         render(d.user, d.licenses);
-        return true;
+        return "ok";
       } catch {
-        return false; // 网络异常也当未登录处理（本地 token 不清，网络恢复再试）
+        return "err"; // 网络异常不清 token——重试或下次访问再拉
       }
     }
 
-    // ---- 启动：无 token 或 token 失效 → 引导卡 ----
-    if (!localStorage.getItem(TOKEN_KEY)) showGate();
-    else if (!(await loadMe())) showGate();
+    // ---- 启动：无 token / token 失效 → 引导卡；网络异常 → 兜底卡可重试（不清 token） ----
+    async function boot() {
+      $("gate").hidden = true;
+      $("lerr").hidden = true;
+      if (!localStorage.getItem(TOKEN_KEY)) {
+        $("acct").hidden = true;
+        showGate();
+        return;
+      }
+      $("acct").hidden = false; // 骨架先亮，边加载边填
+      const r = await loadMe();
+      if (r === "ok") return;
+      $("acct").hidden = true;
+      if (r === "unauth") {
+        localStorage.removeItem(TOKEN_KEY);
+        showGate();
+      } else $("lerr").hidden = false;
+    }
+    await boot();
+    $("retry").addEventListener("click", boot);
 
     // ---- 退出登录 ----
     $("logout").addEventListener("click", async (e) => {
