@@ -103,7 +103,7 @@ const STEPS = [
     <div class="wrap">
       <span class="p-eyebrow">Pricing</span>
       <h1>选适合你的<span class="grad">套餐</span></h1>
-      <p class="sub">定价即将公布，可先<b>注册账号占位</b>；订阅后发放<b>激活码</b>，App 内输入即解锁，低档<b>随时补差价升级</b>。</p>
+      <p class="sub" id="p-sub">定价即将公布，可先<b>注册账号占位</b>；订阅后发放<b>激活码</b>，App 内输入即解锁，低档<b>随时补差价升级</b>。</p>
     </div>
   </header>
 
@@ -197,7 +197,7 @@ const STEPS = [
     <div class="wrap">
       <p class="foot-note">
         <svg class="ic" aria-hidden="true"><use href="#i-info" /></svg>
-        价格与购买渠道以正式公告为准；订阅前请确认已安装 App ——
+        <span id="p-endnote-t">价格与购买渠道以正式公告为准</span>；订阅前请确认已安装 App ——
         <a class="foot-dl" href={APK}><svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 App</a>
       </p>
     </div>
@@ -268,23 +268,50 @@ const STEPS = [
       }
     }
 
-    // ===== 登录态适配（渐进增强，与 Nav 微脚本同款判断）：已登录时按钮改指用户中心 =====
+    // ===== 口径切换：登录态 × 是否已配价 共同决定 CTA 与文案（渐进增强，无 JS 维持「等定价公布」占位） =====
+    let logged = false;
+    let priced = false;
     try {
-      if (localStorage.getItem("bobo_token") && localStorage.getItem("bobo_email")) {
-        document.querySelectorAll(".plan-cta .cta-t").forEach((s) => (s.textContent = "已登录，等定价公布"));
-        document.querySelectorAll<HTMLAnchorElement>(".plan-cta, #up-btn").forEach((a) => (a.href = "/account/"));
-        const up = document.querySelector("#up-btn");
-        if (up) up.textContent = "去用户中心看升级";
-      }
+      logged = !!(localStorage.getItem("bobo_token") && localStorage.getItem("bobo_email"));
     } catch {
-      /* 无 localStorage 环境维持原样 */
+      /* 无 localStorage 环境按未登录处理 */
     }
+
+    function refreshCtas() {
+      document.querySelectorAll<HTMLAnchorElement>(".plan-cta").forEach((a) => {
+        const t = a.querySelector(".cta-t");
+        if (t) t.textContent = priced
+          ? logged ? "已登录 · 去用户中心" : "注册账号，开通订阅"
+          : logged ? "已登录，等定价公布" : "注册账号，等定价公布";
+        a.href = logged ? "/account/" : "/login/";
+      });
+      const up = document.querySelector<HTMLAnchorElement>("#up-btn");
+      if (up && logged) {
+        up.href = "/account/";
+        up.textContent = "去用户中心看升级";
+      }
+    }
+
+    /** 后端已配置正式价：摘掉全页「即将公布」口径 */
+    function markPriced() {
+      priced = true;
+      const sub = document.querySelector("#p-sub");
+      if (sub) sub.innerHTML = `三档四周期<b>明码标价</b>；订阅后发放<b>激活码</b>，App 内输入即解锁，低档<b>随时补差价升级</b>。`;
+      const en = document.querySelector("#p-endnote-t");
+      if (en) en.textContent = "标价以下方展示为准，下单渠道以公告为准";
+      refreshCtas();
+    }
+
+    refreshCtas();
 
     (async () => {
       try {
         const res = await fetch(`${API}/pricing`);
         const d = await res.json().catch(() => null);
-        if (res.ok && d?.ok && d.pricing) apply(d.pricing);
+        if (res.ok && d?.ok && d.pricing) {
+          apply(d.pricing);
+          markPriced();
+        }
       } catch {
         /* 网络异常：维持占位数字 */
       }
