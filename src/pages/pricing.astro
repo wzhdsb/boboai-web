@@ -150,9 +150,9 @@ const STEPS = [
                   <li><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>{item}</li>
                 ))}
               </ul>
-              {/* 占位：暂指向注册登录页，正式版接支付流程 */}
-              <a class={`btn ${t.hot ? "btn-primary" : "btn-ghost"} btn-sm`} href="/login/">
-                {t.hot && <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>}{t.cta}
+              {/* 占位：暂指向注册登录页，正式版接支付流程；已登录时由页尾脚本改指用户中心 */}
+              <a class:list={["btn", "btn-sm", "plan-cta", t.hot ? "btn-primary" : "btn-ghost"]} href="/login/">
+                {t.hot && <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>}<span class="cta-t">{t.cta}</span>
               </a>
             </article>
           ))}
@@ -162,8 +162,8 @@ const STEPS = [
         <div class="upbar">
           <span class="ub-ico"><svg class="ic" aria-hidden="true"><use href="#i-up" /></svg></span>
           <p>已订阅 <b>V0 / V1</b>？升级只补差价——按剩余时长折算，<b>立即生效</b>。</p>
-          {/* 占位：暂指向注册登录页，正式版接账号内的升级流程 */}
-          <a class="btn btn-ghost btn-sm" href="/login/">登录查看升级</a>
+          {/* 占位：暂指向注册登录页，正式版接账号内的升级流程；已登录时由页尾脚本改指用户中心 */}
+          <a class="btn btn-ghost btn-sm" id="up-btn" href="/login/">登录查看升级</a>
         </div>
       </div>
     </section>
@@ -266,6 +266,18 @@ const STEPS = [
         if (save > 0) chip.textContent = `省 ${save}%`;
         else chip.hidden = true;
       }
+    }
+
+    // ===== 登录态适配（渐进增强，与 Nav 微脚本同款判断）：已登录时按钮改指用户中心 =====
+    try {
+      if (localStorage.getItem("bobo_token") && localStorage.getItem("bobo_email")) {
+        document.querySelectorAll(".plan-cta .cta-t").forEach((s) => (s.textContent = "已登录，等定价公布"));
+        document.querySelectorAll<HTMLAnchorElement>(".plan-cta, #up-btn").forEach((a) => (a.href = "/account/"));
+        const up = document.querySelector("#up-btn");
+        if (up) up.textContent = "去用户中心看升级";
+      }
+    } catch {
+      /* 无 localStorage 环境维持原样 */
     }
 
     (async () => {

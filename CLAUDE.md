@@ -46,7 +46,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 **零 JS 约定的两处豁免**：
 - `src/pages/app.astro`（2026-08-30，网页版本地大脑页）：fetch 用户本机 daemon（`config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停。产品形态决定的（数据在用户机器上，静态站拿不到）。
 - `src/pages/login.astro` 与 `src/pages/account.astro`（2026-08-31，账号两页）：表单提交/数据拉取要连自有后端 `lic.boboai.tech`（license-server，`config.ts` 的 `LIC`），纯 CSS 做不了。token 存 localStorage（key `bobo_token`）。`admin.astro` 管理台同属此类（连 `/admin/users`、`/admin/pricing`，密钥 key `bobo_admin`）。
-- `src/pages/pricing.astro`（2026-08-31，定价实时化）：`GET LIC /pricing` 拉管理台配置的价格与促销，拉不到回落占位数字（渐进增强，纯 CSS 周期×档位联动保留）。
+- `src/pages/pricing.astro`（2026-08-31，定价实时化）：`GET LIC /pricing` 拉管理台配置的价格与促销，拉不到回落占位数字（渐进增强，纯 CSS 周期×档位联动保留）。同页脚本另做登录态适配：本机有 `bobo_token` 时三档 CTA 与「登录查看升级」按钮改指 `/account/`（无 JS 维持注册/登录指向）。
 
 除以上五页外继续零 JS；`Nav.astro` 尾部另有一段全站内联微脚本做登录态展示（读 localStorage 换头像胶囊，纯渐进增强，无 JS 时站点完整可用）。新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
 
