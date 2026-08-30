@@ -1,5 +1,5 @@
 ---
-// ===== 管理台（站长自用，不进导航/页脚/搜索引擎）：密钥门 → 注册用户一览 =====
+// ===== 管理台（站长自用，不进导航/页脚/搜索引擎）：密钥门 → 注册用户一览 + 删号 =====
 // 零 JS 豁免第三类：连自有后端（license-server /admin/users）的管理数据页。
 // ADMIN_KEY 只存本机 localStorage（key `bobo_admin`），与用户 token（bobo_token）分开。
 import Layout from "../layouts/Layout.astro";
@@ -136,6 +136,7 @@ import { LIC } from "../config";
                 <b class="u-mail">${esc(u.email)}</b>
                 <i class="chip ${u.status === "active" ? "ok" : "bad"}">${u.status === "active" ? "正常" : "已禁用"}</i>
                 <span class="u-meta">#${u.id} · 注册 ${dateStr(u.created_at)} · 最近登录 ${dateStr(u.last_login_at)}</span>
+                <button class="del" type="button" data-email="${esc(u.email)}">删除</button>
               </div>
               <div class="u-lics">${lics || '<span class="none">未绑定激活码</span>'}</div>
             </div>`;
@@ -205,6 +206,33 @@ import { LIC } from "../config";
     });
 
     $("q").addEventListener("input", renderList);
+
+    // ---- 删号（POST /admin/user-delete）：确认后执行，激活码解绑保留、会话全清 ----
+    async function delUser(email: string, btn: HTMLButtonElement) {
+      const n = data?.users.find((u) => u.email === email)?.licenses.length ?? 0;
+      if (!confirm(`删除 ${email}？\n· 名下 ${n} 张激活码会解绑（码保留，可再绑别的账号）\n· 该账号立即登出，操作不可恢复`)) return;
+      btn.disabled = true;
+      btn.textContent = "删除中…";
+      try {
+        const res = await fetch(`${API}/admin/user-delete`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem(KEY_NAME)}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const d = await res.json().catch(() => null);
+        if (res.ok && d?.ok) await load(); // 重拉列表，汇总数同步
+        else if (d?.error === "not_found") await load(); // 别处已删过，列表对齐即可
+        else alert(d?.error === "rate_limited" ? "操作太频繁，稍等再删" : "删除失败，稍后再试");
+      } catch {
+        alert("网络异常，稍后再试");
+      }
+      btn.disabled = false;
+      btn.textContent = "删除";
+    }
+    $("users").addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest(".del") as HTMLButtonElement | null;
+      if (btn && !btn.disabled) delUser(btn.dataset.email!, btn);
+    });
     $("reload").addEventListener("click", async () => {
       $("reload").textContent = "刷新中…";
       await load();
@@ -266,6 +294,9 @@ import { LIC } from "../config";
   .u-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .u-mail { font-size: 1rem; font-weight: 720; word-break: break-all; }
   .u-meta { color: var(--ink-3); font-size: 0.82rem; }
+  .del { margin-left: auto; border: none; background: none; color: var(--red); font-size: 0.84rem; font-weight: 640; cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+  .del:hover { background: color-mix(in oklab, var(--red) 10%, transparent); }
+  .del:disabled { opacity: 0.5; cursor: default; }
   .u-lics { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   .lic { font-size: 0.86rem; color: var(--ink-2); }
   .lic b { color: var(--ink-1); font-weight: 700; }
