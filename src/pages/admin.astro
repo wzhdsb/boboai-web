@@ -11,6 +11,13 @@ import { LIC } from "../config";
 <Layout title="管理台 — BOBO AI" noindex>
   <Nav variant="sub" ctaLabel="" />
 
+  <!-- 本页新增图标（与 Layout 全局雪碧图同风格：24 视窗 / stroke 1.7 / round cap）。
+       i-lock 顺带补全：下方密钥门一直引用着它，但全局雪碧图里没有这个 symbol。 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.2" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.3v2.6"/></symbol>
+  </svg>
+
   <main class="adm" data-api={LIC}>
     <div class="wrap">
 
@@ -63,34 +70,53 @@ import { LIC } from "../config";
 
         <!-- 定价编辑：保存进 license-server（site_config.pricing），订阅页实时生效，无需发版 -->
         <section id="sec-pricing" hidden>
-          <div class="cell pcard">
-            <h3>定价</h3>
-            <p class="ph">单位元，填每档该周期的<b>合计价</b>（3 个月档就填 3 个月一共多少钱）。订阅页大数字按月折算、合计与立省% 自动算。</p>
+          <div class="cell acc cell--blue pcard">
+            <div class="cell-head">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-tag" /></svg></span>
+              <div><h3>原价</h3><span class="tag">三档 × 四周期</span></div>
+            </div>
+            <p class="ph pcard-lead">单位元，填每档该周期的<b>合计价</b>（3 个月档就填 3 个月一共多少钱）。订阅页大数字按月折算、合计与立省% 自动算。</p>
+            <div class="ptab-cap">原价表 · 12 格全部必填</div>
             <div class="ptab" id="pt-base"></div>
-            <p class="ph" id="p-state"></p>
+            <p class="pstate" id="p-state"></p>
           </div>
-          <div class="cell pcard">
-            <h3>促销</h3>
-            <label class="pm-on"><input type="checkbox" id="pm-on" /> 启用促销</label>
+
+          <div class="cell acc cell--magenta pcard pcard--promo">
+            <div class="pm-head">
+              <div class="cell-head">
+                <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg></span>
+                <div><h3>促销</h3><span class="tag">选配</span></div>
+              </div>
+              <label class="pm-on"><input type="checkbox" id="pm-on" /><i class="sw" aria-hidden="true"></i><b>启用促销</b></label>
+            </div>
             <div id="pm-body">
-              <div class="pm-row">
-                <input type="text" id="pm-name" placeholder="活动名（订阅页角标显示），如：国庆 8 折" maxlength="24" />
-                <label class="pm-end">到期日<input type="date" id="pm-end" /></label>
+              <div class="pm-in">
+                <div class="pm-grid">
+                  <label class="pm-field">
+                    <span>活动名</span>
+                    <input type="text" id="pm-name" placeholder="订阅页角标显示，如：国庆 8 折" maxlength="24" />
+                  </label>
+                  <label class="pm-field">
+                    <span>到期日（可不填）</span>
+                    <input type="date" id="pm-end" />
+                  </label>
+                </div>
+                <p class="ph">启用后订阅页原价划线、旁边显示促销价。到期日当天仍生效、过后自动恢复原价；留空 = 一直生效，取消勾选即停。</p>
+                <div class="pm-quick">
+                  <span class="pq-lab">快填折扣</span>
+                  <span class="pq-in"><input type="number" id="pm-off" min="0.5" max="9.9" step="0.1" placeholder="8" /><i>折</i></span>
+                  <button class="btn btn-ghost btn-sm" id="pm-apply" type="button"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>按原价 × 折扣填入促销价</button>
+                </div>
+                <div class="ptab-cap">促销价表 · 单位元（折后合计）</div>
+                <div class="ptab" id="pt-pm"></div>
               </div>
-              <p class="ph">启用后订阅页原价划线、旁边显示促销价。到期日当天仍生效、过后自动恢复原价；留空 = 一直生效，取消勾选即停。</p>
-              <div class="pm-row">
-                <span class="ph">快填折扣</span>
-                <input type="number" id="pm-off" min="0.5" max="9.9" step="0.1" placeholder="8" />
-                <span class="ph">折</span>
-                <button class="btn btn-sm" id="pm-apply" type="button">按原价 × 折扣填入促销价</button>
-              </div>
-              <div class="ptab" id="pt-pm"></div>
             </div>
           </div>
+
           <div class="psave">
-            <button class="btn btn-primary btn-sm" id="psave" type="button">保存定价</button>
+            <button class="btn btn-primary" id="psave" type="button">保存定价</button>
             <span class="pmsg" id="pmsg"></span>
-            <span class="ph">保存后订阅页刷新即生效</span>
+            <span class="ph psave-hint">保存后订阅页刷新即生效</span>
           </div>
         </section>
       </div>
@@ -295,10 +321,10 @@ import { LIC } from "../config";
 
     function buildPriceTable(host: HTMLElement) {
       host.innerHTML =
-        `<table><thead><tr><th></th>${CYCLES.map(([, l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>` +
+        `<table class="pgrid"><thead><tr><th class="c-corner">档位 / 周期</th>${CYCLES.map(([, l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>` +
         TIERS.map(
           ([t, n]) =>
-            `<tr><th>${n} ${t}</th>${CYCLES.map(
+            `<tr><th><span class="tn">${n}</span><i class="tb tb-${t}">${t}</i></th>${CYCLES.map(
               ([c]) => `<td><input type="number" min="0" max="999999" step="0.01" inputmode="decimal" data-k="${t}.${c}" placeholder="—" /></td>`,
             ).join("")}</tr>`,
         ).join("") +
@@ -485,41 +511,131 @@ import { LIC } from "../config";
   .usearch:focus { border-color: var(--blue); }
   .upd { color: var(--ink-3); font-size: 0.82rem; margin-right: auto; }
 
-  /* ============ 页签 ============ */
-  .tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid color-mix(in oklab, var(--ink-1) 14%, transparent); border-radius: 13px; background: var(--s1); }
-  .tab { border: none; background: none; cursor: pointer; font-size: 0.86rem; font-weight: 660; color: var(--ink-2); padding: 7px 16px; border-radius: 9px; transition: color 0.2s, background 0.2s; }
-  .tab.on { color: #fff; background: linear-gradient(135deg, var(--blue-2), var(--blue-deep)); }
+  /* ============ 页签（与订阅页周期切换器同款分段控件节奏） ============ */
+  .tabs {
+    display: inline-flex; gap: 4px; padding: 5px;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: linear-gradient(180deg, var(--s2), var(--s1));
+    box-shadow: 0 1px 2px rgba(20, 28, 45, 0.04), 0 8px 24px rgba(20, 28, 45, 0.05);
+  }
+  .tab {
+    border: none; background: none; cursor: pointer; font: inherit;
+    font-size: 0.86rem; font-weight: 650; color: var(--ink-2);
+    padding: 8px 18px; border-radius: 10px;
+    transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .tab:hover { color: var(--ink-1); background: rgba(0, 0, 0, 0.045); }
+  .tab.on {
+    color: #fff;
+    background: linear-gradient(135deg, var(--blue-2), var(--blue-deep));
+    box-shadow: 0 6px 16px rgba(31, 102, 184, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
 
   /* ============ 定价编辑 ============ */
-  #sec-pricing { display: flex; flex-direction: column; gap: 12px; animation: rise 0.6s 0.12s var(--ease) both; }
-  .pcard { padding: 18px 20px; }
+  #sec-pricing { display: flex; flex-direction: column; gap: 14px; animation: rise 0.6s 0.12s var(--ease) both; }
+  .pcard { padding: 20px 22px 22px; }
   .pcard h3 { font-size: 1.02rem; font-weight: 740; }
   .ph { font-size: 0.8rem; color: var(--ink-3); font-weight: 500; line-height: 1.7; }
   .ph b { color: var(--ink-2); font-weight: 650; }
-  .ptab { overflow-x: auto; margin-top: 10px; }
-  .ptab table { border-collapse: collapse; min-width: 520px; width: 100%; }
-  .ptab th, .ptab td { padding: 5px 8px; text-align: left; font-size: 0.85rem; color: var(--ink-2); white-space: nowrap; }
-  .ptab thead th { color: var(--ink-3); font-size: 0.78rem; font-weight: 620; }
-  .ptab tbody th { font-weight: 660; color: var(--ink-1); }
-  .ptab input {
-    width: 92px; padding: 8px 10px; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--ink-1) 16%, transparent);
-    background: var(--bg); font-size: 0.9rem; color: var(--ink-1); outline: none; font-variant-numeric: tabular-nums;
+  .pcard-lead { margin-top: 13px; }
+
+  /* ---- 价格矩阵：圆角容器 + 表头带 + 档位徽标（表体由脚本 buildPriceTable 生成，data-k 是读写键） ---- */
+  .ptab-cap { display: flex; align-items: center; gap: 8px; margin-top: 15px; font-size: 0.78rem; font-weight: 660; color: var(--ink-3); }
+  .ptab-cap::before { content: ""; width: 16px; height: 1.5px; background: linear-gradient(90deg, var(--acc, var(--blue)), transparent); }
+  .ptab {
+    overflow-x: auto; margin-top: 8px;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--s1);
   }
-  .ptab input:focus { border-color: var(--blue); }
-  .pm-on { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.92rem; font-weight: 650; color: var(--ink-1); cursor: pointer; }
-  .pm-on input { width: 16px; height: 16px; accent-color: var(--blue); }
-  #pm-body.dim { opacity: 0.45; }
-  .pm-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-  .pm-row input {
-    padding: 8px 12px; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--ink-1) 16%, transparent);
-    background: var(--bg); font-size: 0.9rem; color: var(--ink-1); outline: none;
+
+
+  /* ---- 配置状态行（脚本只写 textContent，空时整体隐藏） ---- */
+  .pstate {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    margin-top: 14px; padding: 9px 13px; border-radius: 10px;
+    font-size: 0.8rem; font-weight: 620; color: var(--ink-2);
+    background: color-mix(in oklab, var(--blue) 6%, var(--s1));
+    border: 1px solid color-mix(in oklab, var(--blue) 18%, transparent);
   }
-  .pm-row input:focus { border-color: var(--blue); }
-  #pm-name { flex: 1; min-width: 200px; }
-  #pm-off { width: 64px; }
-  .pm-end { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--ink-2); white-space: nowrap; }
-  .psave { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .pmsg { font-size: 0.86rem; font-weight: 620; color: var(--green); }
+  .pstate::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-2); }
+  .pstate:empty { display: none; }
+
+  /* ---- 促销卡：卡头带启用开关，关掉整块平滑收缩 + 整卡去强调 ---- */
+  .pm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .pcard--promo:has(#pm-body.dim) { border-color: var(--line); }
+  .cell.pcard--promo:has(#pm-body.dim):hover { border-color: var(--line-strong); }
+  .pcard--promo:has(#pm-body.dim)::before { opacity: 0; }
+  .pcard--promo:has(#pm-body.dim) .ico { filter: grayscale(1); opacity: 0.6; }
+  .pm-on {
+    position: relative; display: inline-flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+  .pm-on input { position: absolute; width: 1px; height: 1px; margin: -1px; opacity: 0; overflow: hidden; white-space: nowrap; clip-path: inset(50%); }
+  .pm-on b { font-size: 0.88rem; font-weight: 650; color: var(--ink-2); transition: color 0.2s; }
+  .pm-on:hover b, .pm-on input:checked ~ b { color: var(--ink-1); }
+  .pm-on .sw {
+    position: relative; flex: none; width: 40px; height: 23px; border-radius: 99px;
+    background: color-mix(in oklab, var(--ink-1) 16%, transparent); border: 1px solid var(--line-strong);
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .pm-on .sw::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%;
+    background: var(--s1); box-shadow: 0 1px 3px rgba(20, 28, 45, 0.25);
+    transition: transform 0.28s var(--ease);
+  }
+  .pm-on input:checked ~ .sw { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); border-color: transparent; }
+  .pm-on input:checked ~ .sw::after { transform: translateX(17px); }
+  .pm-on input:focus-visible ~ .sw { outline: 2px solid var(--blue-2); outline-offset: 2px; }
+  /* 收缩动画：grid-template-rows 0fr↔1fr（不支持的浏览器退化为瞬切，功能不受影响） */
+  #pm-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.4s var(--ease), opacity 0.3s var(--ease); }
+  #pm-body.dim { grid-template-rows: 0fr; opacity: 0; }
+  #pm-body > .pm-in { overflow: hidden; min-height: 0; }
+  .pm-grid { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 12px; margin-top: 16px; }
+  .pm-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .pm-field > span { font-size: 0.78rem; font-weight: 640; color: var(--ink-3); }
+  .pm-field input {
+    width: 100%; min-width: 0; height: 44px; padding: 0 12px; border-radius: 11px;
+    border: 1px solid var(--line-strong); background: var(--s1);
+    font: inherit; font-size: 0.9rem; color: var(--ink-1); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pm-field input::placeholder { color: var(--ink-3); }
+  .pm-field input:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--blue) 13%, transparent); }
+  .pm-in .ph { margin-top: 13px; }
+  .pm-quick {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 14px; padding: 11px 13px;
+    border: 1px solid var(--accB); border-radius: var(--r-sm); background: var(--accS);
+  }
+  .pq-lab { font-size: 0.8rem; font-weight: 660; color: var(--acc); white-space: nowrap; }
+  .pq-in {
+    display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px;
+    border: 1px solid color-mix(in oklab, var(--ink-1) 15%, transparent); border-radius: 10px; background: var(--s1);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pq-in:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in oklab, var(--blue) 14%, transparent); }
+  .pq-in input {
+    width: 56px; border: none; outline: none; background: transparent; text-align: center;
+    font: inherit; font-size: 0.95rem; font-weight: 650; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; appearance: textfield;
+  }
+  .pq-in input::-webkit-outer-spin-button, .pq-in input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pq-in input::placeholder { color: var(--ink-3); }
+  .pq-in i { font-style: normal; font-size: 0.82rem; color: var(--ink-3); }
+  .pm-quick .btn { flex: none; }
+
+  /* ---- 保存条：贴底悬浮的玻璃行动条 ---- */
+  .psave {
+    position: sticky; bottom: 14px; z-index: 3;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 13px 16px;
+    border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--s1) 88%, transparent);
+    backdrop-filter: blur(10px) saturate(1.5);
+    box-shadow: 0 4px 10px rgba(20, 28, 45, 0.05), 0 16px 34px rgba(20, 28, 45, 0.1);
+  }
+  .psave-hint { margin-left: auto; }
+  .pmsg { font-size: 0.86rem; font-weight: 650; color: var(--green); }
+  .pmsg:empty { display: none; }
   .pmsg.bad { color: var(--red); }
 
   /* ============ 汇总卡 ============ */
@@ -551,5 +667,55 @@ import { LIC } from "../config";
 
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 639px) {
+    .pcard { padding: 17px 15px 19px; }
+    .pm-grid { grid-template-columns: 1fr; }
+    .pm-quick .btn { flex: 1 1 100%; justify-content: center; }
+    .psave { bottom: 10px; padding: 11px 12px; gap: 10px; }
+    .psave .btn { flex: 1 1 100%; }
+    .psave-hint { margin-left: 0; }
+  }
+</style>
+
+<!-- 价格矩阵表体由脚本 buildPriceTable() 生成，元素上没有 Astro 作用域属性，
+     局部 <style> 的选择器够不到它们（此前 .ptab table/input 的规则就一直没生效过）。
+     这批规则必须放 is:global；类名 .pgrid/.tn/.tb/.c-corner 为本页专属，不会外溢。 -->
+<style is:global>
+  .pgrid { border-collapse: collapse; table-layout: fixed; min-width: 540px; width: 100%; }
+  .pgrid thead th {
+    padding: 10px 12px; text-align: center; white-space: nowrap;
+    background: color-mix(in oklab, var(--ink-1) 4%, transparent);
+    border-bottom: 1px solid var(--line-strong);
+    color: var(--ink-3); font-size: 0.78rem; font-weight: 640;
+  }
+  .pgrid thead .c-corner { width: 148px; text-align: left; }
+  .pgrid tbody th { padding: 9px 12px; text-align: left; white-space: nowrap; }
+  .pgrid tbody tr + tr th, .pgrid tbody tr + tr td { border-top: 1px dashed color-mix(in oklab, var(--ink-1) 12%, transparent); }
+  .pgrid tbody tr { transition: background 0.15s; }
+  .pgrid tbody tr:hover { background: color-mix(in oklab, var(--blue) 3%, transparent); }
+  .tn { font-size: 0.86rem; font-weight: 660; color: var(--ink-1); }
+  .tb {
+    display: inline-block; margin-left: 8px; vertical-align: 1px; font-style: normal;
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; font-variant-numeric: tabular-nums;
+    color: var(--ink-3); border: 1px solid var(--line-strong); background: var(--s3); border-radius: 6px; padding: 1.5px 7px;
+  }
+  .tb-V1 { color: var(--violet); border-color: color-mix(in oklab, var(--violet) 34%, transparent); background: color-mix(in oklab, var(--violet) 8%, transparent); }
+  .tb-V2 { color: var(--blue-2); border-color: color-mix(in oklab, var(--blue-2) 34%, transparent); background: color-mix(in oklab, var(--blue) 8%, transparent); }
+  .pgrid td { padding: 9px 10px; }
+  .pgrid input {
+    display: block; width: 100%; min-width: 0; padding: 9px 11px; border-radius: 10px;
+    border: 1px solid color-mix(in oklab, var(--ink-1) 15%, transparent);
+    background: var(--s2); font: inherit; font-size: 0.9rem; color: var(--ink-1); outline: none;
+    font-variant-numeric: tabular-nums; text-align: right; appearance: textfield;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .pgrid input:hover { border-color: color-mix(in oklab, var(--ink-1) 30%, transparent); }
+  .pgrid input:focus { border-color: var(--blue); background: var(--s1); box-shadow: 0 0 0 3px color-mix(in oklab, var(--blue) 14%, transparent); }
+  .pgrid input:disabled { opacity: 0.55; }
+  .pgrid input::-webkit-outer-spin-button, .pgrid input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  @media (max-width: 639px) {
+    .pgrid thead .c-corner { width: 116px; }
   }
 </style>
