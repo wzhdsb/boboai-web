@@ -152,6 +152,11 @@ const {
   .sec-head h2 { font-size: clamp(1.55rem, 3vw, 2.1rem); letter-spacing: -0.01em; margin-top: 12px; font-weight: 780; }
   .sec-sub { color: var(--ink-3); margin-top: 9px; font-size: 0.95rem; max-width: 46em; }
 
+  /* hidden 属性兜底：作者样式里的 display:flex（.gate/.nav-user/.btn 等）会压过浏览器
+     默认的 [hidden]{display:none}，导致脚本切 hidden 失灵（卡片藏不掉/胶囊提前露出）。
+     全局拔高优先级，一处根治所有页（2026-08-31 修 admin 密钥卡与账号未登录卡残留）。 */
+  [hidden] { display: none !important; }
+
   /* ============ 按钮 ============ */
   .btn {
     display: inline-flex;
