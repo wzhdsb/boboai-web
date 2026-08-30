@@ -25,21 +25,25 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 ## 结构
 
-- `src/config.ts`——**全站共享常量**：`VERSION` / `VCODE` / `APK`（由版本号派生）/ `GITHUB`（备用渠道）/ `MIRROR` / `SHA256`。各页面 import 使用，禁止在标记里硬编码版本号。
+- `src/config.ts`——**全站共享常量**：`VERSION` / `VCODE` / `APK`（由版本号派生）/ `GITHUB`（备用渠道）/ `MIRROR` / `SITE` / `LIC`（账号后端，dev 指本地 wrangler），以及网页版一组 `DAEMON*`。各页面 import 使用，禁止在标记里硬编码版本号。
 - `src/layouts/Layout.astro`——HTML 外壳 + 全局样式：设计令牌（`:root` CSS 变量：`--bg/--s1~3`、文字三档 `--ink-1/2/3`、蓝族主色 `--blue` 族、六格辅助色 `--violet/--orange/--gold/--magenta`、语义 `--red/--green`）、`.btn`/`.cell`/`.eyebrow` 等全局类、内联 SVG 雪碧图。新增颜色应复用或扩展这些令牌，不要硬编码十六进制值。
 - `src/components/`——共享组件：`Nav.astro`（`variant: "home" | "sub"`；可选 `avatar` prop 显示登录态头像）、`Footer.astro`、`Aurora.astro`（流动极光背景层，`strength: "full" | "soft"`）。
 - `src/pages/`——四个页面：
-  - `index.astro` 主页：hero、功能 Bento 拼贴、三档等级（订阅按钮 → `/pricing/`）、下载模块（官网直链大按钮 + 二维码 + SHA256 折叠 + 安装指引 + GitHub 降级进「其他下载方式」）
+  - `index.astro` 主页：hero、功能 Bento 拼贴、三档等级（订阅按钮 → `/pricing/`）、下载模块（官网直链大按钮 + 构建期生成的真二维码〔`qrcode` 包，frontmatter 出 SVG，指向 `SITE+APK`〕+ 安装指引 + GitHub 降级进「其他下载方式」）
   - `pricing.astro` 订阅页：1月/3月/1年/终身周期切换 + 三档价格联动 + 差价升级说明
-  - `login.astro` 登录/注册：登录↔注册、短信↔邮箱双组 radio tab
-  - `account.astro` 用户中心：左栏导航 + 账户信息/订阅状态（剩余天数进度条）/激活码记录
+  - `login.astro` 登录/注册：邮箱+密码 v1（fetch `LIC` 的 `/auth/login`/`/auth/register`，成功 token 存 localStorage 跳 `/account/`；登录↔注册 tab 仍是 CSS radio）
+  - `account.astro` 用户中心：未登录出引导卡；登录后左栏导航 + 账户信息/订阅状态（剩余天数进度条，按名下生效授权取到期最晚的一条）/激活码绑定（`/auth/bind`）与记录——数据全部来自 `/auth/me`
 
 页面内容数据驱动：frontmatter 数组（主页 `features`/`tiers`/`faqs`/`stats`，订阅页 `CYCLES`/`TIERS`/`PRICES` 等）+ map 渲染。改文案改数组，不动标记。
 
 交互全部零 JS：折叠用原生 `<details>`，切换用 CSS radio + 兄弟选择器（登录 tab、周期×价格联动）。新增交互先想纯 CSS 方案。
 
-**零 JS 约定唯一豁免（2026-08-30）**：`src/pages/app.astro`（网页版本地大脑页）带一个客户端脚本——fetch 用户本机 daemon（地址见 `config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停（学 App 的 onPause 思路）。这是产品形态决定的（数据在用户机器上，静态站拿不到），不是风格松动：其余页面继续零 JS，新增页面不得效仿，除非同样连的是用户本机资源。
+**零 JS 约定的两处豁免**：
+- `src/pages/app.astro`（2026-08-30，网页版本地大脑页）：fetch 用户本机 daemon（`config.ts` 的 `DAEMON`）拉自选行情并 10s 轮询，页面隐藏时暂停。产品形态决定的（数据在用户机器上，静态站拿不到）。
+- `src/pages/login.astro` 与 `src/pages/account.astro`（2026-08-31，账号两页）：表单提交/数据拉取要连自有后端 `lic.boboai.tech`（license-server，`config.ts` 的 `LIC`），纯 CSS 做不了。token 存 localStorage（key `bobo_token`）。
 
-**发新版本流程**：改 `src/config.ts`（VERSION/VCODE/SHA256）→ 按上面 curl 命令拉新 APK（文件名随版本变）→ pricing 价格如有调整同步 `PRICES`。
+除以上三页外继续零 JS；新增页面想带脚本，要么连用户本机资源、要么像账号页一样是「连自有后端的表单/数据页」，其余不批。
 
-**已知占位**（代码内有 TODO 注释，待后端/定价就绪替换）：订阅页全部价格与折扣角标、用户中心用户/订阅/订单数据、登录表单接口与协议链接、主页二维码图案（现为手绘占位，正式版换指向 `APK` 直链的真码）。App 侧订阅后端在 `lic.boboai.tech`，网站账号体系后续对接。
+**发新版本流程**：改 `src/config.ts`（VERSION/VCODE）→ 按上面 curl 命令拉新 APK（文件名随版本变）→ pricing 价格如有调整同步 `PRICES`。
+
+**已知占位**（待后端/定价就绪替换）：订阅页全部价格与折扣角标、账号体系的手机号+短信通道（`users` 表已留扩展位，等 ICP 备案确认后接短信服务商）。账号后端就是 App 的订阅后端 license-server（`lic.boboai.tech`，仓库在 `../license-server`，契约见其 `API.md`）：邮箱+密码注册登录、会话 token、激活码绑定到账号已实现（2026-08-31，本地验证通过），`/admin/generate` 发码后用户可自助在用户中心绑码。线上库要先跑 `schema.sql` + 给 licenses 补列的 ALTER 迁移再部署。

@@ -3,11 +3,15 @@ import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Aurora from "../components/Aurora.astro";
----
+import { LIC } from "../config";
 
+// 邮箱+密码 v1（后端 license-server /auth/*，契约见其 API.md）。短信通道待 ICP 备案确认后加。
+// 本页带客户端脚本（登录/注册要 fetch 后端）——零 JS 约定的第二类豁免：表单类页面，
+// 与 app.astro「连本机资源」不同源，见 CLAUDE.md 豁免注记。
+---
 <Layout
   title="登录 / 注册 — BOBO AI 助理"
-  description="BOBO AI 助理账号：登录或创建账号，注册即送 7 天 App 全功能试用。下载 App 后用同一账号激活，数据仍全部本地存储。"
+  description="注册或登录 BOBO 账号：邮箱 + 密码，在官网绑定激活码、查看订阅状态。App 数据仍全部本地存储。"
 >
   <!-- 极光层：登录页比主页安静一档（soft） -->
   <Aurora strength="soft" />
@@ -17,16 +21,15 @@ import Aurora from "../components/Aurora.astro";
 
   <!-- 本页新增图标（与 Layout 全局雪碧图同风格：24 视窗 / stroke 1.7 / round cap） -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.6 18.5h2.8"/></symbol>
     <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.2" width="18" height="13.6" rx="2.4"/><path d="m4.8 7.5 7.2 5.4 7.2-5.4"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.2" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.3v2.6"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 5 5.5v5.3c0 4.5 2.9 8.2 7 10.2 4.1-2 7-5.7 7-10.2V5.5L12 2.8Z"/><path d="m9 12 2.2 2.2 4-4.5"/></symbol>
   </svg>
 
   <!-- ====== 主体：居中单卡 ====== -->
-  <main class="auth">
+  <main class="auth" data-api={LIC}>
 
-    <!-- 模式 radio：置于卡片之前，CSS 兄弟选择器驱动 tab / 标题 / 表单 / 按钮文案切换 -->
+    <!-- 模式 radio：置于卡片之前，CSS 兄弟选择器驱动 tab / 标题 / 表单切换 -->
     <input class="sr" type="radio" name="mode" id="m-login" checked>
     <input class="sr" type="radio" name="mode" id="m-reg">
 
@@ -44,114 +47,69 @@ import Aurora from "../components/Aurora.astro";
         <div class="head head-login">
           <span class="auth-ico"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
           <h1>欢迎回来</h1>
-          <p>登录 BOBO 账号，同步订阅与激活状态</p>
+          <p>登录 BOBO 账号，管理激活码与订阅</p>
         </div>
         <div class="head head-reg">
           <span class="auth-ico"><svg class="ic" aria-hidden="true"><use href="#i-logo"/></svg></span>
           <h1>创建账号</h1>
-          <p>一个手机号，官网与 App 通用</p>
+          <p>一个邮箱，官网与后续服务通用</p>
         </div>
       </div>
 
-      <!-- ====== 登录表单 ====== -->
-      <!-- 占位：action="#" 为风格稿占位，正式版接入真实登录接口 -->
-      <form class="pane pane-login" action="#" method="post">
-
-        <!-- 登录方式 radio：短信 / 邮箱密码 -->
-        <input class="sr" type="radio" name="way" id="w-sms" checked>
-        <input class="sr" type="radio" name="way" id="w-mail">
-
-        <!-- 方式一：手机号 + 短信验证码 -->
-        <div class="way way-sms">
-          <div class="field">
-            <label class="flabel" for="lp">手机号</label>
-            <div class="inp">
-              <svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>
-              <input id="lp" name="phone" type="tel" inputmode="numeric" maxlength="11"
-                     autocomplete="tel" placeholder="请输入 11 位手机号" required>
-            </div>
-          </div>
-          <div class="field">
-            <label class="flabel" for="lc">短信验证码</label>
-            <div class="inp">
-              <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-              <input id="lc" name="sms-code" type="text" inputmode="numeric" maxlength="6"
-                     autocomplete="one-time-code" placeholder="6 位数字验证码" required>
-              <!-- 占位：发送验证码需后端接口（正式版含 60s 倒计时禁用态），此处仅呈现样式 -->
-              <button type="button" class="code-btn">获取验证码</button>
-            </div>
+      <!-- ====== 登录表单（邮箱 + 密码） ====== -->
+      <form class="pane pane-login" data-mode="login">
+        <div class="field">
+          <label class="flabel" for="le">邮箱</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
+            <input id="le" name="email" type="email" autocomplete="email" autocapitalize="off"
+                   placeholder="you@example.com" required maxlength="254">
           </div>
         </div>
-
-        <!-- 方式切换小 tab -->
-        <div class="mini-tabs">
-          <label for="w-sms">短信验证码登录</label>
-          <label for="w-mail">邮箱 + 密码登录</label>
-        </div>
-
-        <!-- 方式二：邮箱 + 密码 -->
-        <div class="way way-mail">
-          <div class="field">
-            <label class="flabel" for="le">邮箱</label>
-            <div class="inp">
-              <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
-              <input id="le" name="email" type="email" autocomplete="email" autocapitalize="off"
-                     placeholder="you@example.com" required>
-            </div>
-          </div>
-          <div class="field">
-            <div class="flabel-row">
-              <label class="flabel" for="lpw">密码</label>
-              <!-- 占位：忘记密码流程未定，href 为占位 -->
-              <a class="mini-link" href="#">忘记密码？</a>
-            </div>
-            <div class="inp">
-              <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
-              <input id="lpw" name="password" type="password" autocomplete="current-password"
-                     placeholder="请输入密码" required minlength="8">
-            </div>
+        <div class="field">
+          <label class="flabel" for="lpw">密码</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="lpw" name="password" type="password" autocomplete="current-password"
+                   placeholder="请输入密码" required minlength="8" maxlength="128">
           </div>
         </div>
-
-        <!-- 条款勾选（label 只包勾选框，协议链接独立排布，避免点链误触勾选） -->
-        <div class="agree">
-          <label class="agree-cb">
-            <input type="checkbox" name="agree" required>
-            <span class="box"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
-          </label>
-          <p class="agree-txt">我已阅读并同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
-        </div>
-
+        <p class="form-err" hidden></p>
         <button class="btn btn-primary btn-block" type="submit">
-          <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>登录
+          <svg class="ic" aria-hidden="true"><use href="#i-user"/></svg><span>登录</span>
         </button>
       </form>
 
-      <!-- ====== 注册表单 ====== -->
-      <!-- 占位：action="#" 为风格稿占位，正式版接入真实注册接口 -->
-      <form class="pane pane-reg" action="#" method="post">
+      <!-- ====== 注册表单（邮箱 + 密码 + 确认） ====== -->
+      <form class="pane pane-reg" data-mode="reg">
         <div class="field">
-          <label class="flabel" for="rp">手机号</label>
+          <label class="flabel" for="re">邮箱</label>
           <div class="inp">
-            <svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>
-            <input id="rp" name="phone" type="tel" inputmode="numeric" maxlength="11"
-                   autocomplete="tel" placeholder="请输入 11 位手机号" required>
+            <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
+            <input id="re" name="email" type="email" autocomplete="email" autocapitalize="off"
+                   placeholder="you@example.com" required maxlength="254">
           </div>
         </div>
         <div class="field">
-          <label class="flabel" for="rc">短信验证码</label>
+          <label class="flabel" for="rpw">设置密码</label>
           <div class="inp">
-            <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-            <input id="rc" name="sms-code" type="text" inputmode="numeric" maxlength="6"
-                   autocomplete="one-time-code" placeholder="6 位数字验证码" required>
-            <!-- 占位：同登录表单，发送逻辑为后端占位 -->
-            <button type="button" class="code-btn">获取验证码</button>
+            <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="rpw" name="password" type="password" autocomplete="new-password"
+                   placeholder="至少 8 位" required minlength="8" maxlength="128">
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel" for="rpw2">确认密码</label>
+          <div class="inp">
+            <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="rpw2" name="password2" type="password" autocomplete="new-password"
+                   placeholder="再输一次" required minlength="8" maxlength="128">
           </div>
         </div>
 
         <p class="trial">
-          <svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>
-          <span>注册即送 <b>7 天 App 全功能试用</b>，无需绑定支付方式，到期前会在 App 内提醒。</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
+          <span>账号用于在官网<b>绑定激活码、查看订阅状态</b>；App 内数据仍全部本地存储，不上传不同步。</span>
         </p>
 
         <div class="agree">
@@ -159,11 +117,12 @@ import Aurora from "../components/Aurora.astro";
             <input type="checkbox" name="agree" required>
             <span class="box"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
           </label>
-          <p class="agree-txt">我已阅读并同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+          <p class="agree-txt">我已阅读并同意<a href="/privacy/">《隐私政策》</a></p>
         </div>
 
+        <p class="form-err" hidden></p>
         <button class="btn btn-primary btn-block" type="submit">
-          <svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg>注册
+          <svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg><span>注册</span>
         </button>
       </form>
 
@@ -172,15 +131,80 @@ import Aurora from "../components/Aurora.astro";
     <!-- 卡片下方小字：打消隐私顾虑 -->
     <p class="under-note">
       <svg class="ic" aria-hidden="true"><use href="#i-android"/></svg>
-      下载 App 后用同一账号激活
+      App 激活码激活，无需账号也能用
       <span aria-hidden="true">·</span>
       <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-      数据仍全部本地存储
+      聊天与行情数据全部本地存储
     </p>
 
   </main>
 
   <Footer />
+
+  <script>
+    // ===== 登录/注册：fetch license-server（config.ts 的 LIC），token 存 localStorage =====
+    const API = (document.querySelector(".auth") as HTMLElement).dataset.api!;
+    const TOKEN_KEY = "bobo_token";
+
+    // 已登录（本地有 token）直接进用户中心；token 失效则由 /account/ 踢回来
+    if (localStorage.getItem(TOKEN_KEY)) location.replace("/account/");
+
+    // 服务端 error code → 用户能看懂的话
+    const ERR_TEXT: Record<string, string> = {
+      email_taken: "该邮箱已注册——切到「登 录」直接登录即可",
+      bad_credentials: "邮箱或密码不正确",
+      bad_email: "邮箱格式好像不对",
+      bad_password: "密码至少 8 位",
+      rate_limited: "操作太频繁，稍后再试",
+      account_disabled: "账号已被禁用，请联系开发者",
+    };
+
+    function showErr(form: HTMLFormElement, text: string) {
+      const el = form.querySelector(".form-err")!;
+      el.textContent = text;
+      el.hidden = false;
+    }
+
+    document.querySelectorAll<HTMLFormElement>(".pane").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const err = form.querySelector(".form-err") as HTMLElement;
+        err.hidden = true;
+        const email = (form.querySelector('[name="email"]') as HTMLInputElement).value.trim();
+        const password = (form.querySelector('[name="password"]') as HTMLInputElement).value;
+        const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+        const btnTxt = btn.querySelector("span")!;
+
+        // 注册：两次密码一致性本地先查（省一趟网络）
+        if (form.dataset.mode === "reg") {
+          const pw2 = (form.querySelector('[name="password2"]') as HTMLInputElement).value;
+          if (password !== pw2) return showErr(form, "两次输入的密码不一致");
+        }
+
+        btn.disabled = true;
+        btnTxt.textContent = form.dataset.mode === "login" ? "登录中…" : "注册中…";
+        try {
+          const res = await fetch(`${API}/auth/${form.dataset.mode === "login" ? "login" : "register"}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const d = await res.json().catch(() => ({ error: "internal" }));
+          if (!res.ok || !d.ok) {
+            showErr(form, ERR_TEXT[d.error] ?? "出错了，稍后再试");
+            return;
+          }
+          localStorage.setItem(TOKEN_KEY, d.token);
+          location.href = "/account/";
+        } catch {
+          showErr(form, "网络异常，稍后再试");
+        } finally {
+          btn.disabled = false;
+          btnTxt.textContent = form.dataset.mode === "login" ? "登录" : "注册";
+        }
+      });
+    });
+  </script>
 </Layout>
 
 <style>
@@ -197,6 +221,7 @@ import Aurora from "../components/Aurora.astro";
   /* Layout 的 .btn 未含 font-family：按钮元素需显式继承，仅命中本页按钮 */
   .btn { font-family: inherit; }
   .btn-block { width: 100%; }
+  .btn[disabled] { opacity: 0.6; pointer-events: none; }
 
   /* ============ 主体布局：居中单卡 ============ */
   .auth {
@@ -304,16 +329,6 @@ import Aurora from "../components/Aurora.astro";
   /* ============ 输入（白底 / 1px 边 / 蓝描边 focus，高 48px） ============ */
   .field { margin-bottom: 14px; position: relative; }
   .flabel { display: block; font-size: 0.84rem; font-weight: 650; color: var(--ink-2); margin-bottom: 7px; }
-  .flabel-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
-  .flabel-row .flabel { margin-bottom: 0; }
-  .mini-link {
-    font-size: 0.78rem;
-    color: var(--blue-soft);
-    text-decoration: underline;
-    text-decoration-color: rgba(31, 102, 184, 0.4);
-    text-underline-offset: 3px;
-  }
-  .mini-link:hover { color: var(--blue-2); }
   .inp {
     display: flex;
     align-items: center;
@@ -341,59 +356,21 @@ import Aurora from "../components/Aurora.astro";
     color: var(--ink-1);
   }
   .inp input::placeholder { color: var(--ink-3); opacity: 1; }
-  /* 内嵌“获取验证码”占位按钮 */
-  .code-btn {
-    flex: none;
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 650;
-    color: var(--blue-2);
-    border: 1px solid rgba(31, 102, 184, 0.35);
-    background: rgba(42, 120, 214, 0.08);
-    border-radius: 9px;
-    padding: 8px 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .code-btn:hover { background: rgba(42, 120, 214, 0.14); border-color: rgba(31, 102, 184, 0.5); }
 
-  /* ============ 登录方式小 tab（短信 / 邮箱密码） ============ */
-  .way { display: none; }
-  #w-sms:checked ~ .way-sms,
-  #w-mail:checked ~ .way-mail { display: block; animation: paneIn 0.32s var(--ease); }
-  .mini-tabs { display: flex; justify-content: center; gap: 4px; margin: 6px 0 18px; }
-  .mini-tabs label {
-    position: relative;
-    padding: 7px 12px;
-    font-size: 0.8rem;
-    color: var(--ink-3);
-    border-radius: 9px;
-    cursor: pointer;
-    transition: color 0.2s, background 0.2s;
+  /* 提交失败提示条（脚本填文案） */
+  .form-err {
+    margin: 2px 0 14px;
+    padding: 10px 13px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--red);
+    background: rgba(208, 59, 59, 0.06);
+    border: 1px solid rgba(208, 59, 59, 0.28);
+    border-radius: 12px;
+    animation: paneIn 0.25s var(--ease);
   }
-  .mini-tabs label:hover { color: var(--ink-2); background: rgba(0, 0, 0, 0.04); }
-  .mini-tabs label::after {
-    content: "";
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 3px;
-    height: 1.5px;
-    border-radius: 2px;
-    background: var(--blue-2);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.25s var(--ease);
-  }
-  #w-sms:checked ~ .mini-tabs label[for="w-sms"],
-  #w-mail:checked ~ .mini-tabs label[for="w-mail"] { color: var(--blue-2); font-weight: 650; }
-  #w-sms:checked ~ .mini-tabs label[for="w-sms"]::after,
-  #w-mail:checked ~ .mini-tabs label[for="w-mail"]::after { transform: scaleX(1); }
-  #w-sms:focus-visible ~ .mini-tabs label[for="w-sms"],
-  #w-mail:focus-visible ~ .mini-tabs label[for="w-mail"] { outline: 2px solid var(--blue-2); outline-offset: 2px; }
 
-  /* ============ 注册试用说明小字 ============ */
+  /* ============ 注册说明小字 ============ */
   .trial {
     display: flex;
     align-items: flex-start;
@@ -472,6 +449,5 @@ import Aurora from "../components/Aurora.astro";
     .inp input { font-size: 16px; } /* 防 iOS 聚焦自动放大 */
     .tabs label { font-size: 0.88rem; padding: 8px 0; }
     .agree-txt { font-size: 0.78rem; }
-    .mini-tabs label { font-size: 0.78rem; padding: 6px 9px; }
   }
 </style>

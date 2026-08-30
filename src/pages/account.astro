@@ -3,42 +3,12 @@ import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Aurora from "../components/Aurora.astro";
+import { APK, LIC } from "../config";
 
-// ===== 站内链接 =====
-const APK = "/apk/bobo-v1.7.0.apk"; // 与主页下载直链同源
-
-// ===== 占位数据：以下均为演示数据，正式版接账号 / 订阅 / 订单接口 =====
-// 用户资料（占位：用户名 / ID / 脱敏手机号 / 注册时间）
-const USER = {
-  name: "BOBO 用户",
-  id: "10002468",
-  phone: "138****8888",
-  registered: "2026-01-15",
-};
-
-// 账户资料字段（「修改 / 去绑定」为占位入口：手机号走验证流程、邮箱走绑定流程）
-const fields = [
-  { icon: "phone", label: "手机号", value: USER.phone, action: "修改" },
-  { icon: "mail", label: "邮箱", value: "未绑定", dim: true, action: "去绑定" },
-  { icon: "cal", label: "注册时间", value: USER.registered },
-];
-
-// 当前订阅（V1 情报版）的权益标签
-const perks = [
-  { icon: "layers", text: "基础版全部功能" },
-  { icon: "at", text: "多平台博主情报" },
-  { icon: "clock", text: "定时轮询与提醒" },
-  { icon: "search", text: "专属知识库" },
-];
-
-// 激活码记录（占位：3 条记录的订单号 / 档位 / 周期 / 日期 / 状态均为演示数据，日期与订阅卡的 90 天周期互相衔接）
-const records = [
-  { open: true, date: "2026-07-17", order: "BOBO-20260717-8F3A", tier: "V1 情报版", plan: "V1 情报版（当前生效）", days: "90 天", status: "已使用" },
-  { date: "2026-04-18", order: "BOBO-20260418-C2D9", tier: "V1 情报版", plan: "V1 情报版", days: "90 天", status: "已使用" },
-  { date: "2026-01-18", order: "BOBO-20260118-7E40", tier: "V0 基础版", plan: "V0 基础版", days: "90 天", status: "已使用" },
-];
+// 用户中心：数据全部来自 license-server 的 GET /auth/me（Bearer token，login.astro 存的
+// localStorage）。静态渲染只出骨架与「未登录」引导卡，脚本进数据——本页因此带客户端脚本
+// （零 JS 约定第二类豁免：连自有后端的账号页，见 CLAUDE.md 注记）。
 ---
-
 <Layout
   title="用户中心 — BOBO AI 助理"
   description="BOBO AI 助理用户中心：账户信息、订阅状态与激活码记录一处看全。"
@@ -46,158 +16,353 @@ const records = [
   <!-- 极光层：内页比主页安静一档（soft） -->
   <Aurora strength="soft" />
 
-  <!-- 子页导航：logo 回首页，右上角已登录态（头像占位 + 用户名占位） -->
-  <Nav variant="sub" avatar={USER.name} />
+  <!-- 子页导航：右上角不放 CTA（本页自己的内容就取决于登录态） -->
+  <Nav variant="sub" ctaLabel="" />
 
   <!-- 本页新增图标（与 Layout 全局雪碧图同风格：24 视窗 / stroke 1.7 / round cap） -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10l4 5.5L12 20.5 3 9.5 7 4Z"/><path d="M3 9.5h18M7 4l3.5 5.5 1.5 11M17 4l-3.5 5.5-1.5 11"/></symbol>
     <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="16.5" r="4.2"/><path d="M10.5 13.5 20 4M16.2 7.8l2.8 2.8M18.8 5.2l2 2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.5"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5M20 12H9.5"/></symbol>
-    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.5 18.3h3"/></symbol>
-    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.6"/><path d="m4.5 7.5 7.5 5.5 7.5-5.5"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.2" width="18" height="13.6" rx="2.4"/><path d="m4.8 7.5 7.2 5.4 7.2-5.4"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.6"/><path d="M8 2.8v4.4M16 2.8v4.4M3.5 10.5h17"/></symbol>
-    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.2" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.3v2.6"/></symbol>
   </svg>
 
-  <!-- ====== 主体：左窄栏 + 右内容 ====== -->
-  <main class="acct">
+  <main class="acct" data-api={LIC}>
     <div class="wrap">
-      <div class="page-head">
-        <span class="eyebrow">Account</span>
-        <h1>账户信息</h1>
-        <p class="sec-sub">账号资料、订阅状态与激活记录，一处看全。</p>
+
+      <!-- 未登录引导卡（默认隐藏，脚本判定无 token / token 失效时亮出） -->
+      <div class="gate" id="gate" hidden>
+        <div class="cell gate-card">
+          <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-lock" /></svg></span>
+          <h3>还未登录</h3>
+          <p>登录后可在这里绑定激活码、查看订阅状态与到期时间。</p>
+          <a class="btn btn-primary btn-sm" href="/login/">
+            <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>登录 / 注册
+          </a>
+        </div>
       </div>
 
-      <div class="acct-layout">
+      <div class="acct-inner" id="acct">
 
-        <!-- 左窄栏导航（移动端折叠为顶部横向可滚动标签条） -->
-        <aside class="side">
-          <nav class="side-nav" aria-label="用户中心导航">
-            <span class="side-cap">用户中心</span>
-            <a class="snav is-cur" href="#profile" aria-current="page">
-              <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>账户信息
-            </a>
-            <a class="snav" href="#subscription">
-              <svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg>我的订阅
-            </a>
-            <a class="snav" href="#redeem">
-              <svg class="ic" aria-hidden="true"><use href="#i-key" /></svg>激活码记录
-            </a>
-            <!-- 下载 App：与主页下载直链同源 -->
-            <a class="snav" href={APK} download>
-              <svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 App
-            </a>
-            <hr class="side-sep" />
-            <!-- 占位：退出登录，正式版为登出请求 -->
-            <a class="snav snav-logout" href="#">
-              <svg class="ic" aria-hidden="true"><use href="#i-logout" /></svg>退出登录
-            </a>
-          </nav>
-        </aside>
+        <div class="page-head">
+          <span class="eyebrow">Account</span>
+          <h1>账户信息</h1>
+          <p class="sec-sub">账号资料、订阅状态与激活码记录，一处看全。</p>
+        </div>
 
-        <!-- 右内容区 -->
-        <div class="acct-main">
+        <div class="acct-layout">
 
-          <!-- 账户信息卡 -->
-          <article class="cell acc cell--blue" id="profile">
-            <div class="cell-head">
-              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user" /></svg></span>
-              <div><h3>账户信息</h3><span class="tag">已登录</span></div>
-            </div>
-            <div class="profile">
-              <!-- 占位：头像占位圆（首字母）与用户名 / ID，正式版接账号资料接口 -->
-              <span class="avatar avatar-lg" aria-hidden="true">{USER.name.charAt(0)}</span>
-              <div>
-                <div class="uname">{USER.name}</div>
-                <div class="usub">用户 ID {USER.id}</div>
-              </div>
-            </div>
-            <dl class="fields">
-              {fields.map((f) => (
-                <div class="field">
-                  <dt><svg class="ic" aria-hidden="true"><use href={`#i-${f.icon}`} /></svg>{f.label}</dt>
-                  <dd class:list={{ dim: f.dim }}>{f.value}</dd>
-                  {f.action && (
-                    <a class="tlink" href="#">{f.action}<svg class="ic" aria-hidden="true"><use href="#i-arrow" /></svg></a>
-                  )}
-                </div>
-              ))}
-            </dl>
-          </article>
-
-          <!-- 我的订阅卡（信息最密） -->
-          <article class="cell acc cell--violet" id="subscription">
-            <div class="cell-head">
-              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg></span>
-              <div><h3>我的订阅</h3><span class="tag">当前套餐</span></div>
-            </div>
-            <!-- 占位：当前套餐与状态 -->
-            <div class="sp-name">V1 情报版<span class="state"><i></i>生效中</span></div>
-            <div class="pillrow">
-              {perks.map((p) => (
-                <span><svg class="ic" aria-hidden="true"><use href={`#i-${p.icon}`} /></svg>{p.text}</span>
-              ))}
-            </div>
-            <!-- 占位：剩余天数 / 周期 / 起止日期，正式版接订阅接口 -->
-            <div class="remain">
-              <div class="r-top">
-                <span class="r-lab">本订阅周期 · 90 天</span>
-                <span class="r-val">剩余 <b>47</b> 天</span>
-              </div>
-              <div class="r-bar" role="img" aria-label="订阅周期进度：共 90 天，已用 43 天，剩余 47 天">
-                <i style="width:52%"></i>
-              </div>
-              <div class="r-scale">
-                <span>生效日 2026-07-17</span>
-                <span>已用 43 天</span>
-                <span>到期日 2026-10-15</span>
-              </div>
-            </div>
-            <div class="cta-row">
-              <a class="btn btn-primary btn-sm" href="/pricing/">
-                <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>补差价升级 V2
+          <!-- 左窄栏导航（移动端折叠为顶部横向可滚动标签条） -->
+          <aside class="side">
+            <nav class="side-nav" aria-label="用户中心导航">
+              <span class="side-cap">用户中心</span>
+              <a class="snav is-cur" href="#profile" aria-current="page">
+                <svg class="ic" aria-hidden="true"><use href="#i-user" /></svg>账户信息
               </a>
-              <!-- 占位：续费入口，正式版为续费下单流程 -->
-              <a class="btn btn-ghost btn-sm" href="#">续费</a>
-            </div>
-            <p class="s-note"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>升级按剩余时长折算差价，立即生效；续费后新周期自当前到期日顺延。</p>
-          </article>
+              <a class="snav" href="#subscription">
+                <svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg>我的订阅
+              </a>
+              <a class="snav" href="#redeem">
+                <svg class="ic" aria-hidden="true"><use href="#i-key" /></svg>激活码记录
+              </a>
+              <!-- 下载 App：与主页下载直链同源 -->
+              <a class="snav" href={APK} download>
+                <svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 App
+              </a>
+              <hr class="side-sep" />
+              <a class="snav snav-logout" href="#" id="logout">
+                <svg class="ic" aria-hidden="true"><use href="#i-logout" /></svg>退出登录
+              </a>
+            </nav>
+          </aside>
 
-          <!-- 激活码记录卡（零 JS 折叠列表） -->
-          <article class="cell acc cell--blue" id="redeem">
-            <div class="cell-head">
-              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-key" /></svg></span>
-              <div><h3>激活码记录</h3><span class="tag">共 {records.length} 条</span></div>
-            </div>
-            <div class="recs">
-              {records.map((r) => (
-                <details class="rec" open={r.open || undefined}>
-                  <summary>
-                    <span class="rec-date">{r.date}</span>
-                    <code class="rec-ord">{r.order}</code>
-                    <span class="rec-tier">{r.tier}</span>
-                    <span class="ok-chip"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>{r.status}</span>
-                    <span class="pm"></span>
-                  </summary>
-                  <dl class="rec-dl">
-                    <div class="wide"><dt>订单号</dt><dd><code>{r.order}</code></dd></div>
-                    <div><dt>档位</dt><dd>{r.plan}</dd></div>
-                    <div><dt>订阅周期</dt><dd>{r.days}</dd></div>
-                    <div><dt>激活日期</dt><dd>{r.date}</dd></div>
-                    <div><dt>状态</dt><dd>{r.status}</dd></div>
-                  </dl>
-                </details>
-              ))}
-            </div>
-          </article>
+          <!-- 右内容区 -->
+          <div class="acct-main">
 
+            <!-- 账户信息卡 -->
+            <article class="cell acc cell--blue" id="profile">
+              <div class="cell-head">
+                <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user" /></svg></span>
+                <div><h3>账户信息</h3><span class="tag">已登录</span></div>
+              </div>
+              <div class="profile">
+                <span class="avatar avatar-lg" id="avatar" aria-hidden="true">·</span>
+                <div>
+                  <div class="uname" id="u-email">…</div>
+                  <div class="usub" id="u-id">…</div>
+                </div>
+              </div>
+              <dl class="fields">
+                <div class="field">
+                  <dt><svg class="ic" aria-hidden="true"><use href="#i-mail" /></svg>邮箱</dt>
+                  <dd id="f-email">…</dd>
+                </div>
+                <div class="field">
+                  <dt><svg class="ic" aria-hidden="true"><use href="#i-cal" /></svg>注册时间</dt>
+                  <dd id="f-created">…</dd>
+                </div>
+                <div class="field">
+                  <dt><svg class="ic" aria-hidden="true"><use href="#i-clock" /></svg>上次登录</dt>
+                  <dd id="f-login">…</dd>
+                </div>
+              </dl>
+            </article>
+
+            <!-- 我的订阅卡（数据取名下生效中的授权；tier 与主页三档同口径） -->
+            <article class="cell acc cell--violet" id="subscription">
+              <div class="cell-head">
+                <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-gem" /></svg></span>
+                <div><h3>我的订阅</h3><span class="tag">当前套餐</span></div>
+              </div>
+              <div class="sp-name"><span id="sub-name">…</span><span class="state" id="sub-state" hidden><i></i><b>生效中</b></span></div>
+              <div class="pillrow" id="perks" hidden></div>
+              <div class="remain" id="remain" hidden>
+                <div class="r-top">
+                  <span class="r-lab" id="r-lab">本订阅周期</span>
+                  <span class="r-val">剩余 <b id="r-left">…</b> 天</span>
+                </div>
+                <div class="r-bar" id="r-bar" role="img">
+                  <i style="width:0%"></i>
+                </div>
+                <div class="r-scale">
+                  <span id="r-start">生效日 —</span>
+                  <span id="r-used">已用 —</span>
+                  <span id="r-end">到期日 —</span>
+                </div>
+              </div>
+              <div class="cta-row" id="sub-cta"></div>
+              <p class="s-note"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>升级按剩余时长折算差价，立即生效；续费后新周期自当前到期日顺延。</p>
+            </article>
+
+            <!-- 激活码卡：绑定入口 + 名下记录 -->
+            <article class="cell acc cell--blue" id="redeem">
+              <div class="cell-head">
+                <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-key" /></svg></span>
+                <div><h3>激活码</h3><span class="tag" id="rec-count">共 0 条</span></div>
+              </div>
+              <form class="bind" id="bind-form">
+                <div class="inp">
+                  <svg class="ic" aria-hidden="true"><use href="#i-key" /></svg>
+                  <input id="bind-code" type="text" inputmode="latin" autocapitalize="characters"
+                         placeholder="MAA-XXXXX-XXXXX-XXXXX" maxlength="40" required>
+                </div>
+                <button class="btn btn-primary btn-sm" type="submit" id="bind-btn">
+                  <svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg><span>绑定</span>
+                </button>
+              </form>
+              <p class="bind-note" id="bind-msg" hidden></p>
+              <p class="bind-hint">把购买到的激活码绑到账号：激活仍在 App 内进行（App「我的 → 激活」输同一个码），这里负责记录与到期提醒。</p>
+              <div class="recs" id="recs"></div>
+            </article>
+
+          </div>
         </div>
       </div>
     </div>
   </main>
 
   <Footer />
+
+  <script>
+    // ===== 用户中心数据流：/auth/me 拉账号+名下授权；绑定 /auth/bind；退出 /auth/logout =====
+    const API = (document.querySelector(".acct") as HTMLElement).dataset.api!;
+    const TOKEN_KEY = "bobo_token";
+    const TIER_NAME: Record<number, string> = { 0: "V0 基础版", 1: "V1 情报版", 2: "V2 旗舰版" };
+    const PERKS: Record<number, [string, string][]> = {
+      0: [["chat", "AI 对话·识图·语音"], ["candle", "实时行情与自选持仓"], ["bell", "盘中买卖点提醒"], ["layers", "本地备份与恢复"]],
+      1: [["layers", "基础版全部功能"], ["at", "多平台博主情报"], ["clock", "定时轮询与提醒"], ["search", "专属知识库"]],
+      2: [["layers", "情报版全部功能"], ["news", "每日三档消息面日报"], ["doc", "AI 深度个股分析"], ["check", "预判回验与错案反哺"]],
+    };
+
+    type Lic = {
+      app: string; app_name: string | null; tier: number; plan: string;
+      status: string; activated_at: string | null; subscription_expires_at: number | null; devices: number;
+    };
+    type Me = {
+      user: { id: number; email: string; created_at: string; last_login_at: string | null };
+      licenses: Lic[];
+    };
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const esc = (s: string) =>
+      s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+    const dateStr = (v: string | number | null | undefined) =>
+      v == null ? "—" : new Date(typeof v === "number" ? v * 1000 : v).toISOString().slice(0, 10);
+
+    function authHeaders(): HeadersInit {
+      return { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY) ?? ""}` };
+    }
+
+    function showGate() {
+      localStorage.removeItem(TOKEN_KEY);
+      $("gate").hidden = false;
+      $("acct").hidden = true;
+    }
+
+    /** 订阅状态：取生效中到期最晚的一条；没有生效中则显示最近一条的终态 */
+    function statusOf(lic: Lic, now: number): "active" | "expired" | "unused" | "revoked" {
+      if (lic.status === "revoked") return "revoked";
+      if (lic.status === "unused") return "unused";
+      return Number(lic.subscription_expires_at ?? 0) > now ? "active" : "expired";
+    }
+
+    function render(user: Me["user"], lics: Lic[]) {
+      const email = user.email ?? "";
+      $("avatar").textContent = (email.charAt(0) || "·").toUpperCase();
+      $("u-email").textContent = email;
+      $("u-id").textContent = `用户 ID ${user.id}`;
+      $("f-email").textContent = email;
+      $("f-created").textContent = dateStr(user.created_at);
+      $("f-login").textContent = dateStr(user.last_login_at);
+
+      // ---- 订阅卡 ----
+      const now = Math.floor(Date.now() / 1000);
+      const active = lics
+        .filter((l) => statusOf(l, now) === "active")
+        .sort((a, b) => Number(b.subscription_expires_at) - Number(a.subscription_expires_at));
+      const cur = active[0];
+      const tier = cur?.tier ?? -1;
+
+      $("sub-name").textContent = cur ? TIER_NAME[tier] ?? `V${tier}` : "暂无生效订阅";
+      const state = $("sub-state");
+      if (cur) {
+        state.hidden = false;
+        state.querySelector("b")!.textContent = "生效中";
+      } else state.hidden = true;
+
+      const perks = $("perks");
+      perks.innerHTML = cur
+        ? (PERKS[tier] ?? []).map(([ic, text]) => `<span><svg class="ic" aria-hidden="true"><use href="#i-${ic}" /></svg>${text}</span>`).join("")
+        : `<span><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>订阅后解锁博主情报、消息面日报与 AI 个股分析</span>`;
+      perks.hidden = false;
+
+      const remain = $("remain");
+      if (cur && cur.activated_at && cur.subscription_expires_at) {
+        const start = Math.floor(Date.parse(cur.activated_at) / 1000);
+        const end = cur.subscription_expires_at;
+        const left = Math.max(0, end - now);
+        const used = Math.max(0, now - start);
+        const pct = Math.min(100, Math.max(0, (left / Math.max(1, end - start)) * 100));
+        remain.hidden = false;
+        $("r-lab").textContent = "本订阅周期";
+        $("r-left").textContent = String(Math.ceil(left / 86400));
+        ($("r-bar").firstElementChild as HTMLElement).style.width = `${pct.toFixed(1)}%`;
+        $("r-bar").setAttribute("aria-label", `订阅周期进度：已用 ${Math.floor(used / 86400)} 天，剩余 ${Math.ceil(left / 86400)} 天`);
+        $("r-start").textContent = `生效日 ${dateStr(cur.activated_at)}`;
+        $("r-used").textContent = `已用 ${Math.floor(used / 86400)} 天`;
+        $("r-end").textContent = `到期日 ${dateStr(end)}`;
+      } else remain.hidden = true;
+
+      $("sub-cta").innerHTML = cur
+        ? tier < 2
+          ? `<a class="btn btn-primary btn-sm" href="/pricing/"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>补差价升级 ${TIER_NAME[tier + 1] ?? "更高档"}</a>`
+          : `<a class="btn btn-primary btn-sm" href="/pricing/"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>续费</a>`
+        : `<a class="btn btn-primary btn-sm" href="/pricing/"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg>去订阅</a>`;
+
+      // ---- 激活码记录 ----
+      $("rec-count").textContent = `共 ${lics.length} 条`;
+      const stChip: Record<string, [string, string]> = {
+        active: ["ok", "生效中"],
+        expired: ["dim", "已到期"],
+        unused: ["warn", "未激活"],
+        revoked: ["bad", "已吊销"],
+      };
+      $("recs").innerHTML = lics.length
+        ? lics
+            .map((l) => {
+              const [cls, txt] = stChip[statusOf(l, now)] ?? ["dim", l.status];
+              const tname = TIER_NAME[l.tier] ?? `V${l.tier}`;
+              const d = l.activated_at ?? user.created_at;
+              return `<details class="rec">
+              <summary>
+                <span class="rec-date">${dateStr(d)}</span>
+                <code class="rec-ord">${esc(l.app_name ?? l.app)}</code>
+                <span class="rec-tier">${tname}</span>
+                <span class="st-chip ${cls}">${txt}</span>
+                <span class="pm"></span>
+              </summary>
+              <dl class="rec-dl">
+                <div class="wide"><dt>应用</dt><dd>${esc(l.app_name ?? l.app)}</dd></div>
+                <div><dt>档位</dt><dd>${tname}</dd></div>
+                <div><dt>状态</dt><dd>${txt}</dd></div>
+                <div><dt>首次激活</dt><dd>${dateStr(l.activated_at)}</dd></div>
+                <div><dt>到期日</dt><dd>${dateStr(l.subscription_expires_at)}</dd></div>
+                <div><dt>绑定设备</dt><dd>${l.devices} 台</dd></div>
+              </dl>
+            </details>`;
+            })
+            .join("")
+        : `<p class="rec-empty">还没有绑定激活码——购买后用上面的输入框绑进来，App 里激活同一个码即可。</p>`;
+    }
+
+    async function loadMe(): Promise<boolean> {
+      try {
+        const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
+        if (res.status === 401) return false;
+        const d = await res.json();
+        if (!res.ok || !d.ok) return false;
+        render(d.user, d.licenses);
+        return true;
+      } catch {
+        return false; // 网络异常也当未登录处理（本地 token 不清，网络恢复再试）
+      }
+    }
+
+    // ---- 启动：无 token 或 token 失效 → 引导卡 ----
+    if (!localStorage.getItem(TOKEN_KEY)) showGate();
+    else if (!(await loadMe())) showGate();
+
+    // ---- 退出登录 ----
+    $("logout").addEventListener("click", async (e) => {
+      e.preventDefault();
+      try { await fetch(`${API}/auth/logout`, { method: "POST", headers: authHeaders() }); } catch { /* 本地 token 反正要清 */ }
+      localStorage.removeItem(TOKEN_KEY);
+      location.href = "/login/";
+    });
+
+    // ---- 绑定激活码 ----
+    $("bind-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = ($("bind-code") as HTMLInputElement).value.trim();
+      if (!code) return;
+      const msg = $("bind-msg");
+      const btn = $("bind-btn") as HTMLButtonElement;
+      const btnTxt = btn.querySelector("span")!;
+      btn.disabled = true;
+      btnTxt.textContent = "绑定中…";
+      msg.hidden = true;
+      try {
+        const res = await fetch(`${API}/auth/bind`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ code }) });
+        const d = await res.json().catch(() => ({ error: "internal" }));
+        if (!res.ok || !d.ok) {
+          const why: Record<string, string> = {
+            invalid_code: "激活码无效——检查有没有抄错",
+            revoked: "该码已被吊销",
+            code_already_bound: "该码已绑在其他账号下",
+            rate_limited: "操作太频繁，稍后再试",
+          };
+          msg.textContent = why[d.error] ?? "绑定失败，稍后再试";
+          msg.className = "bind-note is-err";
+        } else {
+          // 绑定成功：整表刷新（/auth/bind 返回的就是全量 licenses）
+          const me = await (await fetch(`${API}/auth/me`, { headers: authHeaders() })).json();
+          if (me.ok) render(me.user, me.licenses);
+          msg.textContent = "绑定成功——在 App「我的 → 激活」输入同一个码即可激活";
+          msg.className = "bind-note is-ok";
+          ($("bind-code") as HTMLInputElement).value = "";
+        }
+      } catch {
+        msg.textContent = "网络异常，稍后再试";
+        msg.className = "bind-note is-err";
+      } finally {
+        msg.hidden = false;
+        btn.disabled = false;
+        btnTxt.textContent = "绑定";
+      }
+    });
+  </script>
 </Layout>
 
 <style>
@@ -216,6 +381,29 @@ const records = [
   .acct-main { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
   .acct-main > * { scroll-margin-top: 88px; }
   code { font-family: var(--mono); }
+
+  /* ============ 未登录引导卡 ============ */
+  .gate { display: flex; justify-content: center; padding: 64px 0 32px; }
+  .gate-card {
+    max-width: 400px;
+    padding: 34px 32px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    animation: rise 0.6s var(--ease) both;
+  }
+  .gate-card .ico {
+    width: 46px; height: 46px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: rgba(42, 120, 214, 0.08);
+    border: 1px solid rgba(31, 102, 184, 0.26);
+    color: var(--blue-2);
+  }
+  .gate-card .ico .ic { width: 22px; height: 22px; }
+  .gate-card h3 { margin: 6px 0 0; font-size: 1.25rem; font-weight: 760; }
+  .gate-card p { margin: 0; font-size: 0.9rem; color: var(--ink-2); line-height: 1.75; }
+  .gate-card .btn { margin-top: 8px; }
 
   /* ============ 左栏导航 ============ */
   .side {
@@ -281,7 +469,7 @@ const records = [
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65), 0 2px 6px rgba(20, 28, 45, 0.14);
   }
   .avatar-lg { width: 62px; height: 62px; font-size: 1.55rem; }
-  .uname { font-size: 1.08rem; font-weight: 730; }
+  .uname { font-size: 1.08rem; font-weight: 730; word-break: break-all; }
   .usub { font-size: 0.8rem; color: var(--ink-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
   .fields { margin-top: 16px; position: relative; }
   .field {
@@ -295,10 +483,6 @@ const records = [
   .field dt { display: inline-flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--ink-3); }
   .field dt .ic { width: 15px; height: 15px; }
   .field dd { margin-left: auto; font-size: 0.93rem; font-weight: 620; font-variant-numeric: tabular-nums; }
-  .field dd.dim { color: var(--ink-3); font-weight: 500; }
-  .tlink { display: inline-flex; align-items: center; gap: 2px; font-size: 0.84rem; font-weight: 620; color: var(--blue-soft); }
-  .tlink .ic { width: 13px; height: 13px; margin-right: -5px; }
-  .tlink:hover { color: #17457e; text-decoration: underline; text-underline-offset: 3px; }
 
   /* ============ 我的订阅卡 ============ */
   .sp-name {
@@ -370,8 +554,41 @@ const records = [
   .s-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: 0.78rem; color: var(--ink-3); line-height: 1.7; position: relative; }
   .s-note .ic { width: 14px; height: 14px; margin-top: 3px; color: var(--green); }
 
-  /* ============ 激活码记录卡（零 JS <details> 折叠列表） ============ */
+  /* ============ 绑定激活码 ============ */
+  .bind { display: flex; gap: 10px; margin-top: 18px; position: relative; }
+  .bind .inp {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 13px;
+    background: #fff;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-width: 0;
+  }
+  .bind .inp:focus-within { border-color: var(--blue-2); box-shadow: 0 0 0 3.5px rgba(31, 102, 184, 0.13); }
+  .bind .inp .ic { width: 17px; height: 17px; color: var(--ink-3); flex: none; }
+  .bind .inp input {
+    flex: 1; min-width: 0; height: 100%;
+    border: none; outline: none; background: transparent;
+    font: inherit; font-size: 0.9rem;
+    font-family: var(--mono); letter-spacing: 0.02em;
+    color: var(--ink-1); text-transform: uppercase;
+  }
+  .bind .inp input::placeholder { color: var(--ink-3); text-transform: none; font-family: inherit; }
+  .bind .btn { flex: none; font-family: inherit; }
+  .bind .btn[disabled] { opacity: 0.6; pointer-events: none; }
+  .bind-note { margin-top: 10px; font-size: 0.8rem; line-height: 1.6; border-radius: 10px; padding: 8px 12px; }
+  .bind-note.is-ok { color: var(--green); background: rgba(10, 129, 10, 0.06); border: 1px solid rgba(10, 129, 10, 0.26); }
+  .bind-note.is-err { color: var(--red); background: rgba(208, 59, 59, 0.06); border: 1px solid rgba(208, 59, 59, 0.26); }
+  .bind-hint { margin-top: 10px; font-size: 0.76rem; color: var(--ink-3); line-height: 1.7; }
+
+  /* ============ 激活码记录（<details> 折叠列表，脚本填充） ============ */
   .recs { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; position: relative; }
+  .rec-empty { font-size: 0.86rem; color: var(--ink-3); padding: 18px 0 6px; text-align: center; }
   .rec { border: 1px solid var(--line); border-radius: var(--r-sm); background: rgba(255, 255, 255, 0.85); transition: border-color 0.25s, background 0.25s; }
   .rec:hover { border-color: var(--line-strong); }
   .rec[open] { border-color: rgba(31, 102, 184, 0.35); background: linear-gradient(180deg, rgba(42, 120, 214, 0.06), var(--s1)); }
@@ -389,29 +606,28 @@ const records = [
   .rec-date { font-size: 0.78rem; color: var(--ink-3); font-variant-numeric: tabular-nums; flex: none; }
   .rec-ord { font-size: 0.78rem; color: var(--ink-1); letter-spacing: 0.01em; }
   .rec-tier { font-size: 0.72rem; color: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 6px; padding: 1.5px 8px; flex: none; }
-  .rec .pm { width: 22px; height: 22px; border-radius: 7px; }
+  .rec .pm { width: 22px; height: 22px; border-radius: 7px; margin-left: auto; }
   .rec[open] .pm { border-color: rgba(31, 102, 184, 0.55); background: rgba(42, 120, 214, 0.1); }
-  .ok-chip {
-    margin-left: auto;
+  .st-chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     flex: none;
     font-size: 0.72rem;
     font-weight: 650;
-    color: var(--green);
-    border: 1px solid rgba(10, 129, 10, 0.28);
-    background: rgba(10, 129, 10, 0.06);
     border-radius: 999px;
     padding: 2.5px 10px;
   }
-  .ok-chip .ic { width: 12px; height: 12px; }
+  .st-chip.ok { color: var(--green); border: 1px solid rgba(10, 129, 10, 0.28); background: rgba(10, 129, 10, 0.06); }
+  .st-chip.warn { color: #8a6100; border: 1px solid rgba(111, 76, 0, 0.3); background: rgba(138, 97, 0, 0.06); }
+  .st-chip.dim { color: var(--ink-3); border: 1px solid var(--line-strong); background: rgba(0, 0, 0, 0.03); }
+  .st-chip.bad { color: var(--red); border: 1px solid rgba(208, 59, 59, 0.28); background: rgba(208, 59, 59, 0.06); }
+  .rec .st-chip { margin-left: auto; }
   .rec-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; padding: 2px 13px 13px; animation: faqIn 0.32s var(--ease); }
   .rec-dl > div { min-width: 0; }
   .rec-dl .wide { grid-column: span 2; }
   .rec-dl dt { font-size: 0.72rem; color: var(--ink-3); }
   .rec-dl dd { margin-top: 3px; font-size: 0.88rem; font-weight: 620; color: var(--ink-1); font-variant-numeric: tabular-nums; }
-  .rec-dl dd.dim { color: var(--ink-3); font-weight: 500; }
 
   /* ============ motion ============ */
   @keyframes rise {
@@ -440,6 +656,9 @@ const records = [
     .snav { white-space: nowrap; padding: 8px 13px; }
     .snav.is-cur::before { display: none; }
     .side-sep { display: none; }
+    .bind { flex-wrap: wrap; }
+    .bind .inp { flex: 1 1 100%; }
+    .bind .btn { flex: 1; }
   }
   @media (max-width: 639px) {
     .acct { padding: 36px 0 56px; }

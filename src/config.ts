@@ -13,14 +13,16 @@ export const GITHUB =
 // 国内镜像前缀（App「检查更新 → ⚙ 配置」里填写）
 export const MIRROR = "https://ghfast.top/";
 
-// bobo-v1.7.0.apk（17444474 字节）的真实 SHA256；发新版后随 APK 一并更新
-// 计算：sha256sum public/apk/bobo-v1.7.0.apk
-export const SHA256 =
-  "db263918db9ec1a8ed57f04a724624af6bc7689e17122a7c172888568c695901";
+// 线上站点地址（主页二维码指向 APK 直链时拼绝对 URL 用）
+export const SITE = "https://www.boboai.tech";
 
 // 网页版（/app）连的本机 daemon 地址。当前直连 127.0.0.1（Chrome 对回环地址的混合内容
 // 有豁免）；daemon 签好证书上 443 后切 https://local.boboai.tech（DNS 已指 127.0.0.1）
 export const DAEMON = "http://127.0.0.1:48080";
+
+// 账号后端（license-server，Cloudflare Worker）：登录/注册/用户中心走它。
+// 本地开发指向 wrangler dev（其 CORS 已放行 localhost:4321），生产走自定义域。
+export const LIC = import.meta.env.DEV ? "http://127.0.0.1:8787" : "https://lic.boboai.tech";
 
 // 本地大脑安装包：存 GitHub Releases（Pages 免费档单文件 25MB 上限装不下）。
 // 网页主链路走同源反代 /api/dl/（functions/api/dl，流式透传 + 进度条数据源）；

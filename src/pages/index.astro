@@ -3,9 +3,15 @@ import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Aurora from "../components/Aurora.astro";
-import { VERSION, VCODE, APK, GITHUB, MIRROR, SHA256 } from "../config";
+import QRCode from "qrcode";
+import { VERSION, VCODE, APK, GITHUB, MIRROR, SITE } from "../config";
 
-const SHA256_SHORT = `${SHA256.slice(0, 16)}…`;
+// 扫码下载真码：构建期生成 SVG（零 JS 约定不破），指向与主按钮相同的 APK 直链
+const qrSvg = await QRCode.toString(`${SITE}${APK}`, {
+  type: "svg",
+  margin: 1, // 静区主要靠 qr-box 的白底留白，这里再补 1 模块
+  color: { dark: "#1a1a19", light: "#00000000" }, // dark = --ink-1，底透明交给白盒子
+});
 
 // ===== 内容数组：改文案只改这里 =====
 const features = [
@@ -179,8 +185,8 @@ const faqs = [
       <div class="wrap">
         <div class="sec-head">
           <span class="eyebrow">Features</span>
-          <h2>一屏拼贴，各就各位</h2>
-          <p class="sec-sub">六大能力按便当盒网格各占一格：大格放主功能，小格放数据点，每格独立材质与底色。</p>
+          <h2>六大核心能力</h2>
+          <p class="sec-sub">AI 对话、实时行情、个股分析、盘中提醒、消息面日报、博主情报——装进同一个约 17MB 的 App，数据全部本地存储。</p>
         </div>
 
         <div class="bento">
@@ -341,7 +347,7 @@ const faqs = [
         <div class="sec-head">
           <span class="eyebrow">Download</span>
           <h2>下载安装</h2>
-          <p class="sec-sub">官网直链为主，GitHub 作备用；一次安装，往后交给应用内更新。</p>
+          <p class="sec-sub">下载即用，无需注册账号；装好这一次，往后的版本更新都在 App 内完成。</p>
         </div>
         <div class="dl-grid">
           <!-- 主下载格：官网直链（唯一强 CTA） -->
@@ -354,52 +360,13 @@ const faqs = [
               <svg class="ic" aria-hidden="true"><use href="#i-dl" /></svg>下载 APK · {VERSION}
             </a>
             <p class="dl-ver">版本 {VERSION}（versionCode {VCODE}）· 约 17MB · Android 11+</p>
-            <details class="dl-hash">
-              <summary>
-                <span class="lab">SHA256</span>
-                <code>{SHA256_SHORT}</code>
-                <span class="pm"></span>
-              </summary>
-              <div class="fbody">
-                <code class="dl-hash-full">{SHA256}</code>
-                <p class="dl-hash-tip">下载后可校验完整性：Windows 在 PowerShell 里运行 certutil -hashfile 文件名 SHA256；macOS / Linux 运行 shasum -a 256 文件名。</p>
-              </div>
-            </details>
           </article>
 
           <!-- 扫码格 -->
           <article class="cell dl-qr">
             <div class="qr-box">
-              <!-- 占位：手绘"二维码样式"装饰图案，未做真实编码；正式版换真码，指向与主按钮相同的下载直链 -->
-              <svg class="qr" viewBox="0 0 25 25" role="img" aria-label="扫码下载二维码（占位图案）" shape-rendering="crispEdges">
-                <rect width="25" height="25" fill="#ffffff"/>
-                <path class="qr-f" fill-rule="evenodd" d="M0 0h7v7H0z M2 2h3v3H2z M18 0h7v7h-7z M20 2h3v3H20z M0 18h7v7H0z M2 20h3v3H2z M16 16h5v5h-5z M18 18h1v1z"/>
-                <path class="qr-f" d="M8 6h1v1z M10 6h1v1z M12 6h1v1z M14 6h1v1z M16 6h1v1z M6 8h1v1z M6 10h1v1z M6 12h1v1z M6 14h1v1z M6 16h1v1z"/>
-                <path class="qr-f" d="M7 0h1v1z M9 0h1v1z M10 0h1v1z M13 0h1v1z M16 0h1v1z M17 0h1v1z
-                  M8 1h1v1z M12 1h1v1z M14 1h1v1z
-                  M7 2h1v1z M9 2h1v1z M11 2h1v1z M15 2h1v1z
-                  M10 3h1v1z M13 3h1v1z M16 3h1v1z M17 3h1v1z
-                  M8 4h1v1z M12 4h1v1z M15 4h1v1z
-                  M7 5h1v1z M9 5h1v1z M14 5h1v1z M16 5h1v1z
-                  M0 7h1v1z M2 7h1v1z M3 7h1v1z M7 7h1v1z M9 7h1v1z M11 7h1v1z M14 7h1v1z M17 7h1v1z M19 7h1v1z M20 7h1v1z M23 7h1v1z
-                  M1 8h1v1z M4 8h1v1z M7 8h1v1z M10 8h1v1z M13 8h1v1z M18 8h1v1z M21 8h1v1z M24 8h1v1z
-                  M0 9h1v1z M2 9h1v1z M5 9h1v1z M8 9h1v1z M12 9h1v1z M15 9h1v1z M19 9h1v1z M22 9h1v1z M24 9h1v1z
-                  M3 10h1v1z M7 10h1v1z M9 10h1v1z M11 10h1v1z M16 10h1v1z M20 10h1v1z M23 10h1v1z
-                  M1 11h1v1z M4 11h1v1z M10 11h1v1z M13 11h1v1z M17 11h1v1z M21 11h1v1z M24 11h1v1z
-                  M0 12h1v1z M2 12h1v1z M8 12h1v1z M14 12h1v1z M18 12h1v1z M19 12h1v1z M22 12h1v1z
-                  M5 13h1v1z M7 13h1v1z M11 13h1v1z M15 13h1v1z M20 13h1v1z M23 13h1v1z M24 13h1v1z
-                  M1 14h1v1z M3 14h1v1z M9 14h1v1z M12 14h1v1z M16 14h1v1z M21 14h1v1z
-                  M0 15h1v1z M4 15h1v1z M8 15h1v1z M13 15h1v1z M17 15h1v1z M19 15h1v1z M22 15h1v1z M24 15h1v1z
-                  M1 16h1v1z M4 16h1v1z M8 16h1v1z M10 16h1v1z M13 16h1v1z M15 16h1v1z
-                  M2 17h1v1z M5 17h1v1z M9 17h1v1z M12 17h1v1z M14 17h1v1z M21 17h1v1z M23 17h1v1z
-                  M7 18h1v1z M10 18h1v1z M12 18h1v1z M15 18h1v1z M21 18h1v1z M24 18h1v1z
-                  M8 19h1v1z M11 19h1v1z M14 19h1v1z M22 19h1v1z M23 19h1v1z
-                  M7 20h1v1z M9 20h1v1z M13 20h1v1z M21 20h1v1z M24 20h1v1z
-                  M8 21h1v1z M10 21h1v1z M13 21h1v1z M16 21h1v1z M18 21h1v1z M20 21h1v1z M23 21h1v1z
-                  M7 22h1v1z M11 22h1v1z M14 22h1v1z M17 22h1v1z M19 22h1v1z M24 22h1v1z
-                  M9 23h1v1z M12 23h1v1z M15 23h1v1z M18 23h1v1z M21 23h1v1z
-                  M8 24h1v1z M10 24h1v1z M13 24h1v1z M16 24h1v1z M17 24h1v1z M20 24h1v1z M22 24h1v1z M24 24h1v1z"/>
-              </svg>
+              <!-- 构建期生成的真二维码（frontmatter qrSvg），指向与主按钮相同的 APK 直链 -->
+              <div class="qr" set:html={qrSvg} role="img" aria-label={`扫码下载二维码，指向 ${SITE}${APK}`} />
             </div>
             <div class="qr-txt">
               <h3>手机扫码，直接下载</h3>
@@ -855,31 +822,7 @@ const faqs = [
   .dl-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(31, 102, 184, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.28); }
   .dl-ver { margin-top: 12px; font-size: 0.8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; position: relative; }
 
-  /* SHA256 折叠（零 JS <details>） */
-  .dl-hash { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.85); position: relative; transition: border-color 0.25s; }
-  .dl-hash[open] { border-color: rgba(31, 102, 184, 0.35); }
-  .dl-hash summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 0.82rem; color: var(--ink-2); }
-  .dl-hash summary::-webkit-details-marker { display: none; }
-  .dl-hash summary:focus-visible { outline-offset: -2px; }
-  .dl-hash .lab { font-weight: 650; flex: none; }
-  .dl-hash summary code { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-1); letter-spacing: 0.02em; }
-  .dl-hash .pm { margin-left: auto; width: 22px; height: 22px; }
-  .dl-hash .fbody { padding: 0 12px 11px; }
-  .dl-hash-full {
-    display: block;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    line-height: 1.7;
-    color: var(--ink-1);
-    word-break: break-all;
-    background: #f6f5f1;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 9px 11px;
-  }
-  .dl-hash-tip { margin-top: 8px; font-size: 0.72rem; color: var(--ink-3); line-height: 1.7; }
-
-  /* 扫码格 */
+  /* 扫码格（qrSvg 构建期注入，内部 svg 用 :global 命中） */
   .qr-box {
     flex: none;
     width: max-content;
@@ -889,8 +832,8 @@ const faqs = [
     border-radius: 14px;
     box-shadow: 0 1px 2px rgba(20, 28, 45, 0.05);
   }
-  .qr { display: block; width: 125px; height: 125px; }
-  .qr-f { fill: var(--ink-1); }
+  .qr { width: 125px; height: 125px; }
+  .qr :global(svg) { display: block; width: 100%; height: 100%; }
   .qr-txt h3 { font-size: 1.05rem; font-weight: 730; position: relative; }
   .qr-txt p { margin-top: 8px; font-size: 0.84rem; color: var(--ink-3); position: relative; }
 
