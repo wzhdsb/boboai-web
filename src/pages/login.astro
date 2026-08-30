@@ -11,7 +11,7 @@ import { LIC } from "../config";
 ---
 <Layout
   title="登录 / 注册 — BOBO AI 助理"
-  description="注册或登录 BOBO 账号：邮箱 + 密码，在官网绑定激活码、查看订阅状态。App 数据仍全部本地存储。"
+  description="注册或登录 BOBO 账号：邮箱 + 密码，在官网绑定激活码、查看订阅状态。App 数据不上传我们的服务器。"
 >
   <!-- 极光层：登录页比主页安静一档（soft） -->
   <Aurora strength="soft" />
@@ -52,7 +52,7 @@ import { LIC } from "../config";
         <div class="head head-reg">
           <span class="auth-ico"><svg class="ic" aria-hidden="true"><use href="#i-logo"/></svg></span>
           <h1>创建账号</h1>
-          <p>一个邮箱，官网与后续服务通用</p>
+          <p>一个邮箱，管好你的激活码和订阅</p>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ import { LIC } from "../config";
 
         <p class="trial">
           <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-          <span>账号用于在官网<b>绑定激活码、查看订阅状态</b>；App 内数据仍全部本地存储，不上传不同步。</span>
+          <span>账号用于在官网<b>绑定激活码、查看订阅状态</b>；App 内数据存在你手机里，不上传我们的服务器。</span>
         </p>
 
         <div class="agree">
@@ -134,7 +134,7 @@ import { LIC } from "../config";
       App 激活码激活，无需账号也能用
       <span aria-hidden="true">·</span>
       <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-      聊天与行情数据全部本地存储
+      聊天与行情数据存在你手机里，不上传我们的服务器
     </p>
 
   </main>

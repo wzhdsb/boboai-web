@@ -1,11 +1,12 @@
-<!-- 页脚：品牌行 + Cloudflare 加速行 + © 2026 + Android 商标声明（沿用正式站文案） -->
+<!-- 页脚：品牌行 + 独立开发署名行 + © 2026 + Android 商标声明 + 常设风险提示小字 -->
 <footer>
   <div class="wrap foot">
     <span class="brand">
       <svg class="logo" aria-hidden="true"><use href="#i-logo" /></svg>
       BOBO AI 助理 · <a href="https://boboai.tech">boboai.tech</a>
     </span>
-    <span class="foot-line">本站由 Cloudflare 全球边缘网络加速 · © 2026 · Android 是 Google LLC 的商标 · <a href="/privacy/">隐私政策</a></span>
+    <span class="foot-line">独立开发，做小做好 · © 2026 boboai.tech · Android 是 Google LLC 的商标 · <a href="/privacy/">隐私政策</a></span>
+    <p class="foot-disc">行情、分析与提醒仅为信息参考，不构成投资建议；股市有风险，决策请谨慎。</p>
   </div>
 </footer>
 
@@ -26,6 +27,15 @@
   .foot-line { font-size: 0.84rem; color: var(--ink-3); margin-left: auto; }
   .foot-line a { color: var(--ink-3); }
   .foot-line a:hover { color: var(--blue-2); }
+  /* 常设合规提示：比 foot-line 更小一档、减淡（复用 --ink-3，不新增色值） */
+  .foot-disc {
+    flex-basis: 100%;
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: var(--ink-3);
+    opacity: 0.78;
+  }
   @media (max-width: 639px) {
     .foot-line { margin-left: 0; }
   }

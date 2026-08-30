@@ -153,7 +153,7 @@ import { APK, LIC } from "../config";
                 </button>
               </form>
               <p class="bind-note" id="bind-msg" hidden></p>
-              <p class="bind-hint">把购买到的激活码绑到账号：激活仍在 App 内进行（App「我的 → 激活」输同一个码），这里负责记录与到期提醒。</p>
+              <p class="bind-hint">买到的激活码在这里绑到账号，留个档：激活仍在 App 内进行（App「我的 → 激活」输同一个码），换机或忘码时回这里找。</p>
               <div class="recs" id="recs"></div>
             </article>
 
@@ -171,9 +171,9 @@ import { APK, LIC } from "../config";
     const TOKEN_KEY = "bobo_token";
     const TIER_NAME: Record<number, string> = { 0: "V0 基础版", 1: "V1 情报版", 2: "V2 旗舰版" };
     const PERKS: Record<number, [string, string][]> = {
-      0: [["chat", "AI 对话·识图·语音"], ["candle", "实时行情与自选持仓"], ["bell", "盘中买卖点提醒"], ["layers", "本地备份与恢复"]],
+      0: [["chat", "AI 对话·识图·语音"], ["candle", "实时行情与自选持仓"], ["bell", "自设条件的盘中提醒"], ["layers", "本地备份与恢复"]],
       1: [["layers", "基础版全部功能"], ["at", "多平台博主情报"], ["clock", "定时轮询与提醒"], ["search", "专属知识库"]],
-      2: [["layers", "情报版全部功能"], ["news", "每日三档消息面日报"], ["doc", "AI 深度个股分析"], ["check", "预判回验与错案反哺"]],
+      2: [["layers", "情报版全部功能"], ["news", "每日三档消息面日报"], ["doc", "AI 深度个股分析"], ["check", "提醒与预判自动校准"]],
     };
 
     type Lic = {
@@ -285,7 +285,7 @@ import { APK, LIC } from "../config";
               </summary>
               <dl class="rec-dl">
                 <div class="wide"><dt>应用</dt><dd>${esc(l.app_name ?? l.app)}</dd></div>
-                <div><dt>档位</dt><dd>${tname}</dd></div>
+                <div><dt>套餐</dt><dd>${tname}</dd></div>
                 <div><dt>状态</dt><dd>${txt}</dd></div>
                 <div><dt>首次激活</dt><dd>${dateStr(l.activated_at)}</dd></div>
                 <div><dt>到期日</dt><dd>${dateStr(l.subscription_expires_at)}</dd></div>
@@ -294,7 +294,7 @@ import { APK, LIC } from "../config";
             </details>`;
             })
             .join("")
-        : `<p class="rec-empty">还没有绑定激活码——购买后用上面的输入框绑进来，App 里激活同一个码即可。</p>`;
+        : `<p class="rec-empty">还没有绑定激活码——购买后在上方输入框绑进来，App 里激活同一个码即可。</p>`;
     }
 
     async function loadMe(): Promise<boolean> {

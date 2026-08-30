@@ -46,8 +46,8 @@ const TIERS: Tier[] = [
     tag: "V0",
     hot: false,
     desc: "开箱即用的日常主力",
-    items: ["AI 对话·识图·语音", "实时行情与自选持仓", "盘中买卖点提醒", "本地备份与恢复"],
-    cta: "订阅基础版",
+    items: ["AI 对话·识图·语音", "实时行情与自选持仓", "自设条件的盘中提醒", "本地备份与恢复"],
+    cta: "注册账号，等定价公布",
   },
   {
     name: "情报版",
@@ -55,15 +55,15 @@ const TIERS: Tier[] = [
     hot: false,
     desc: "把博主情报装进口袋",
     items: ["基础版全部功能", "多平台博主情报", "定时轮询与提醒", "专属知识库"],
-    cta: "订阅情报版",
+    cta: "注册账号，等定价公布",
   },
   {
     name: "旗舰版",
     tag: "V2",
     hot: true,
-    desc: "全能力 · 越用越懂你",
-    items: ["情报版全部功能", "每日三档消息面日报", "AI 深度个股分析", "预判回验与错案反哺"],
-    cta: "订阅旗舰版",
+    desc: "全部能力 · 一步到位",
+    items: ["情报版全部功能", "每日三档消息面日报", "AI 深度个股分析", "提醒与预判自动校准，越用越贴合习惯"],
+    cta: "注册账号，等定价公布",
   },
 ];
 
@@ -77,9 +77,9 @@ const PRICES: Record<TierTag, Record<CycleKey, string>> = {
 
 // ===== 三步流程 =====
 const STEPS = [
-  { no: "STEP 01", icon: "check", title: "选档订阅", body: "选定档位与支付周期，完成订阅；V0 / V1 / V2 三档随时可补差价上行。" },
-  { no: "STEP 02", icon: "key", title: "收到激活码", body: "激活码随订单即时发放，请复制留存；也可稍后在订单页反复查看。" },
-  { no: "STEP 03", icon: "android", title: "App 内输入解锁", body: "打开 App 的「激活」页输入激活码，对应档位全功能立即解锁。" },
+  { no: "STEP 01", icon: "check", title: "选套餐订阅", body: "选定套餐与支付周期，完成订阅；V0 / V1 / V2 三档随时可补差价上行。" },
+  { no: "STEP 02", icon: "key", title: "收到激活码", body: "下单后激活码立刻发到你手里，复制留存；App 里输码即解锁，详见下一步。" },
+  { no: "STEP 03", icon: "android", title: "App 内输入解锁", body: "打开 App 的「激活」页输入激活码，对应套餐全功能立即解锁。" },
 ];
 ---
 
@@ -101,8 +101,8 @@ const STEPS = [
   <header class="phead">
     <div class="wrap">
       <span class="p-eyebrow">Pricing</span>
-      <h1>选择你的<span class="grad">档位</span></h1>
-      <p class="sub">订阅后发放<b>激活码</b>，在 App 内输入即解锁；已订阅低档<b>随时补差价升级</b>。</p>
+      <h1>选适合你的<span class="grad">套餐</span></h1>
+      <p class="sub">定价即将公布，可先<b>注册账号占位</b>；订阅后发放<b>激活码</b>，App 内输入即解锁，低档<b>随时补差价升级</b>。</p>
     </div>
   </header>
 
@@ -161,7 +161,7 @@ const STEPS = [
           <span class="ub-ico"><svg class="ic" aria-hidden="true"><use href="#i-up" /></svg></span>
           <p>已订阅 <b>V0 / V1</b>？升级只补差价——按剩余时长折算，<b>立即生效</b>。</p>
           {/* 占位：暂指向注册登录页，正式版接账号内的升级流程 */}
-          <a class="btn btn-ghost btn-sm" href="/login/">去升级</a>
+          <a class="btn btn-ghost btn-sm" href="/login/">登录查看升级</a>
         </div>
       </div>
     </section>
