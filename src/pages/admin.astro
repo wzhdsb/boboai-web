@@ -16,6 +16,7 @@ import { LIC } from "../config";
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.4"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.2" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.3v2.6"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="4"/><path d="M9.9 14.1 21 3M15.5 8.5l3 3M12 12l2 2"/></symbol>
   </svg>
 
   <main class="adm" data-api={LIC}>
@@ -53,6 +54,51 @@ import { LIC } from "../config";
 
         <!-- 用户一览 -->
         <section id="sec-users">
+          <!-- 发码：收款后一键 生成 → 已注册买家自动绑号 → 邮件送达（未配邮件密钥则回显码手动转发） -->
+          <div class="cell pcard" id="issue-card">
+            <div class="cell-head">
+              <span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-key" /></svg></span>
+              <div><h3>发码</h3><span class="tag">收款后直发买家</span></div>
+            </div>
+            <div class="pm-grid is-grid">
+              <label class="pm-field">
+                <span>买家邮箱</span>
+                <input type="email" id="is-email" placeholder="buyer@example.com" />
+              </label>
+              <label class="pm-field">
+                <span>套餐</span>
+                <select id="is-tier">
+                  <option value="2">旗舰版 V2</option>
+                  <option value="1">情报版 V1</option>
+                  <option value="0">基础版 V0</option>
+                </select>
+              </label>
+              <label class="pm-field">
+                <span>周期</span>
+                <select id="is-cycle">
+                  <option value="1y">1 年</option>
+                  <option value="3m">3 个月</option>
+                  <option value="1m">1 个月</option>
+                  <option value="life">终身</option>
+                </select>
+              </label>
+              <label class="pm-field">
+                <span>备注（可选）</span>
+                <input type="text" id="is-note" maxlength="60" placeholder="渠道/订单号，仅管理端可见" />
+              </label>
+            </div>
+            <p class="ph">买家已注册则码自动绑到他账号（用户中心立刻可见）；邮件通道配置后自动发送，未配置时码显示在这里供手动转发。</p>
+            <div class="psave-row">
+              <button class="btn btn-primary btn-sm" id="is-send" type="button">生成并发码</button>
+              <span class="pmsg" id="is-msg"></span>
+            </div>
+            <div class="is-out" id="is-out" hidden>
+              <code class="is-code" id="is-code"></code>
+              <button class="btn btn-ghost btn-sm" id="is-copy" type="button">复制</button>
+              <span class="ph" id="is-state"></span>
+            </div>
+          </div>
+
           <div class="usearch">
             <svg class="ic" aria-hidden="true"><use href="#i-search" /></svg>
             <input type="search" id="q" placeholder="按邮箱筛选…" />
@@ -205,7 +251,10 @@ import { LIC } from "../config";
                 <div class="u-line">
                   <b class="u-mail">${esc(u.email)}</b>
                   <i class="chip ${u.status === "active" ? "ok" : "bad"}">${u.status === "active" ? "正常" : "已禁用"}</i>
-                  <button class="del" type="button" data-email="${esc(u.email)}">删除</button>
+                  <span class="ucta">
+                    <button class="iss" type="button" data-email="${esc(u.email)}">发码</button>
+                    <button class="del" type="button" data-email="${esc(u.email)}">删除</button>
+                  </span>
                 </div>
                 <span class="u-meta">#${u.id} · 注册 ${dateStr(u.created_at)} · 最近登录 ${dateStr(u.last_login_at)}</span>
               </div>
@@ -301,9 +350,79 @@ import { LIC } from "../config";
       btn.textContent = "删除";
     }
     $("users").addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest(".del") as HTMLButtonElement | null;
-      if (btn && !btn.disabled) delUser(btn.dataset.email!, btn);
+      const t = e.target as HTMLElement;
+      const del = t.closest(".del") as HTMLButtonElement | null;
+      if (del && !del.disabled) delUser(del.dataset.email!, del);
+      const iss = t.closest(".iss") as HTMLButtonElement | null;
+      if (iss) quickIssue(iss.dataset.email!);
     });
+
+    // ---- 发码（POST /admin/issue）：生成 → 已注册买家自动绑号 → 邮件直发；未配邮件密钥则回显码供手动转发 ----
+    function isMsg(text: string, bad = false) {
+      const m = $("is-msg");
+      m.textContent = text;
+      m.classList.toggle("bad", bad);
+    }
+    async function issueCode() {
+      const email = ($("is-email") as HTMLInputElement).value.trim().toLowerCase();
+      const tier = Number(($("is-tier") as HTMLSelectElement).value);
+      const cycle = ($("is-cycle") as HTMLSelectElement).value;
+      const note = ($("is-note") as HTMLInputElement).value.trim();
+      if (!email) { isMsg("先填买家邮箱", true); return; }
+      const btn = $("is-send") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "发码中…";
+      $("is-out").hidden = true;
+      isMsg("");
+      try {
+        const res = await fetch(`${API}/admin/issue`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem(KEY_NAME)}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ email, tier, cycle, note: note || undefined }),
+        });
+        if (res.status === 401) { // 密钥失效：恢复按钮再退回密钥门
+          btn.disabled = false;
+          btn.textContent = "生成并发码";
+          localStorage.removeItem(KEY_NAME);
+          data = null;
+          showGate();
+          return;
+        }
+        const d = await res.json().catch(() => null);
+        if (!res.ok || !d?.ok) {
+          isMsg(d?.error === "rate_limited" ? "操作太频繁，稍后再发" : d?.error === "bad_email" ? "邮箱格式不对" : "发码失败，稍后再试", true);
+          return;
+        }
+        $("is-code").textContent = d.code;
+        const mail = d.mail === "sent" ? "邮件已发送 ✓" : d.mail === "failed" ? "邮件发送失败——把上面的码手动转发给买家" : "邮件通道未配置——把上面的码手动转发给买家";
+        $("is-state").textContent = `${mail}${d.bound ? " · 已绑到买家账号" : " · 买家未注册，码先留着，他注册后可自助绑定"}`;
+        $("is-out").hidden = false;
+        isMsg("已生成 ✓");
+        $("is-note").value = "";
+        await load(); // 重拉列表：新绑的码出现在买家卡上
+      } catch {
+        isMsg("网络异常，稍后再试", true);
+      }
+      btn.disabled = false;
+      btn.textContent = "生成并发码";
+    }
+    $("is-send").addEventListener("click", issueCode);
+    $("is-copy").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText($("is-code").textContent ?? "");
+        isMsg("已复制 ✓");
+      } catch {
+        isMsg("复制失败，手动选中复制", true);
+      }
+    });
+    /** 用户卡上的「发码」：回填邮箱、滚到发码卡聚焦 */
+    function quickIssue(email: string) {
+      const input = $("is-email") as HTMLInputElement;
+      input.value = email;
+      document.getElementById("issue-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      input.focus();
+      isMsg(`已带入 ${email}`);
+    }
     $("reload").addEventListener("click", async () => {
       $("reload").textContent = "刷新中…";
       if ($("sec-pricing").hidden) await load();
@@ -613,6 +732,24 @@ import { LIC } from "../config";
   }
   .pm-field input::placeholder { color: var(--ink-3); }
   .pm-field input:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--blue) 13%, transparent); }
+  .pm-field select {
+    width: 100%; min-width: 0; height: 44px; padding: 0 12px; border-radius: 11px;
+    border: 1px solid var(--line-strong); background: var(--s1);
+    font: inherit; font-size: 0.9rem; color: var(--ink-1); outline: none; cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pm-field select:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--blue) 13%, transparent); }
+  /* 发码卡四字段：邮箱占宽、套餐/周期并排、备注整行；≤605 时随 .pm-grid 塌成单列 */
+  .is-grid { grid-template-columns: minmax(0, 1.7fr) 1fr 1fr; }
+  .is-grid .pm-field:last-child { grid-column: 1 / -1; }
+  .is-out { margin-top: 13px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .is-code {
+    font-family: var(--mono); font-size: 1.02rem; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--ink-1); padding: 8px 14px; border-radius: 10px;
+    background: color-mix(in oklab, var(--blue) 7%, var(--s1));
+    border: 1px dashed color-mix(in oklab, var(--blue-2) 45%, transparent);
+    word-break: break-all;
+  }
   .pm-in .ph { margin-top: 13px; }
   .pm-quick {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -744,6 +881,17 @@ import { LIC } from "../config";
   }
   .del:hover { color: var(--red); border-color: color-mix(in oklab, var(--red) 42%, transparent); background: color-mix(in oklab, var(--red) 7%, transparent); }
   .del:disabled { opacity: 0.55; cursor: default; color: var(--ink-3); border-color: var(--line-strong); background: transparent; }
+
+  /* 发码与删除同组右贴：正向操作用安静的蓝幽灵按钮，与 .del 的红对称（文案会被脚本改写，不放图标） */
+  .ucta { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
+  .iss {
+    flex: none; font: inherit;
+    font-size: 0.78rem; font-weight: 640; color: var(--ink-2);
+    background: transparent; border: 1px solid var(--line-strong); border-radius: 8px;
+    padding: 3px 11px; cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .iss:hover { color: var(--blue-2); border-color: color-mix(in oklab, var(--blue-2) 45%, transparent); background: color-mix(in oklab, var(--blue) 8%, transparent); }
 
   /* ---- 激活码行：浅底小胶囊条，档位/套餐/状态/到期分位 ---- */
   .u-lics { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }

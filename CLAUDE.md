@@ -33,7 +33,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
   - `pricing.astro` 订阅页：1月/3月/1年/终身周期切换 + 三档价格联动 + 差价升级说明。**价格实时化（2026-08-31）**：脚本 `GET LIC /pricing` 拉管理台配的价（每周期合计价，大数字按月折算、合计/立省% 自动算），促销生效则原价划线旁显促销价 + 红角标；未配置或网络异常回落构建期占位 `PRICES`（纯降级底，正式价不再发版改）
   - `login.astro` 登录/注册：邮箱+密码 v1（fetch `LIC` 的 `/auth/login`/`/auth/register`，成功 token 存 localStorage 跳 `/account/`；登录↔注册 tab 仍是 CSS radio）
   - `account.astro` 用户中心：未登录出引导卡；登录后左栏导航 + 账户信息/订阅状态（剩余天数进度条，按名下生效授权取到期最晚的一条）/激活码绑定（`/auth/bind`）与记录——数据全部来自 `/auth/me`
-  - `admin.astro` 管理台（站长自用，不进导航/页脚，`noindex` 不进搜索引擎）：密钥门 → 用户/定价两页签。用户页签 POST `LIC` 的 `/admin/users`（Bearer `ADMIN_KEY`）拉注册用户+名下激活码+汇总卡，本地按邮箱筛选，每卡「删除」按钮走 `/admin/user-delete`（confirm 确认；激活码解绑保留、会话全清、用户行删除）；定价页签编辑三档 × 四周期合计价 + 促销（活动名/到期日/折扣快填），`POST /admin/pricing` 保存进 `site_config.pricing`，订阅页实时生效。密钥存 localStorage（key `bobo_admin`，与用户会话 `bobo_token` 分开）
+  - `admin.astro` 管理台（站长自用，不进导航/页脚，`noindex` 不进搜索引擎）：密钥门 → 用户/定价两页签。用户页签顶部「发码」卡走 `POST /admin/issue`（买家邮箱+档位+周期 → 生成码、已注册买家自动绑号、配了 Resend 密钥则邮件直发，未配则回显码复制后手动转发；用户卡上的「发码」按钮回填邮箱滚回该卡），下方 POST `LIC` 的 `/admin/users`（Bearer `ADMIN_KEY`）拉注册用户+名下激活码+汇总卡，本地按邮箱筛选，每卡「删除」按钮走 `/admin/user-delete`（confirm 确认；激活码解绑保留、会话全清、用户行删除）；定价页签编辑三档 × 四周期合计价 + 促销（活动名/到期日/折扣快填），`POST /admin/pricing` 保存进 `site_config.pricing`，订阅页实时生效。密钥存 localStorage（key `bobo_admin`，与用户会话 `bobo_token` 分开）
 
 页面内容数据驱动：frontmatter 数组（主页 `features`/`tiers`/`faqs`/`stats`，订阅页 `CYCLES`/`TIERS`/`PRICES` 等）+ map 渲染。改文案改数组，不动标记。
 
