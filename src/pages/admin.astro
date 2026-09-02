@@ -185,8 +185,10 @@ import { LIC } from "../config";
       app: string; app_name: string | null; tier: number; plan: string;
       status: string; activated_at: string | null; subscription_expires_at: number | null; devices: number;
     };
+    type Backup = { size: number; chunks: number; created_at: string };
     type User = {
       id: number; email: string; status: string; created_at: string; last_login_at: string | null; licenses: Lic[];
+      nickname: string; has_avatar: 0 | 1; backup: Backup | null;
     };
     type Data = {
       ok: true;
@@ -199,6 +201,17 @@ import { LIC } from "../config";
       s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
     const dateStr = (v: string | number | null | undefined) =>
       v == null ? "—" : new Date(typeof v === "number" ? v * 1000 : v).toISOString().slice(0, 10);
+    /** 备份体积：≥1MB 显一位小数，否则整 KB（至少 1KB） */
+    const fmtSize = (n: number) =>
+      n >= 1048576 ? `${(n / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`;
+    /** 备份时间 → UTC+8 的 MM-DD HH:mm（站长时区固定 +8，不随浏览设备漂移）；无效时间返回空串 */
+    function bakTime(iso: string): string {
+      const t = new Date(iso).getTime();
+      if (!Number.isFinite(t)) return "";
+      const d = new Date(t + 8 * 3600e3);
+      const p = (v: number) => String(v).padStart(2, "0");
+      return `${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+    }
 
     let data: Data | null = null;
 
@@ -218,13 +231,16 @@ import { LIC } from "../config";
     function render() {
       if (!data) return;
       const s = data.stats;
+      const backed = data.users.filter((u) => u.backup).length;
       $("stats").innerHTML = `
         <div class="cell stat stat--user"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user" /></svg></span>
           <div class="s-b"><b>${s.users}</b><span>注册用户</span></div></div>
         <div class="cell stat stat--lic"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-box" /></svg></span>
           <div class="s-b"><b>${s.bound_licenses}</b><span>绑定激活码</span></div></div>
         <div class="cell stat stat--sub"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-zap" /></svg></span>
-          <div class="s-b"><b>${s.active_subscriptions}</b><span>生效订阅</span></div></div>`;
+          <div class="s-b"><b>${s.active_subscriptions}</b><span>生效订阅</span></div></div>
+        <div class="cell stat stat--bak"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cloud" /></svg></span>
+          <div class="s-b"><b>${backed}</b><span>已备份用户</span></div></div>`;
       renderList();
       $("updated").textContent = `更新于 ${new Date().toTimeString().slice(0, 5)}`;
     }
@@ -246,6 +262,17 @@ import { LIC } from "../config";
                 </span>`;
               })
               .join("");
+            // 账号信息行：昵称/头像/云端备份——缺的退灰，有备份给绿点轻强调
+            const nick = (u.nickname ?? "").trim();
+            const bak = u.backup;
+            const bt = bak ? bakTime(bak.created_at) : "";
+            const prof = [
+              `<span class="pf${nick ? " pf-on" : ""}">${nick ? esc(nick) : "未设昵称"}</span>`,
+              `<span class="pf${u.has_avatar === 1 ? " pf-on" : ""}">${u.has_avatar === 1 ? "已设头像" : "未设头像"}</span>`,
+              bak
+                ? `<span class="pf pf-bak"><i class="pf-dot" aria-hidden="true"></i>云端备份 ${fmtSize(bak.size)}${bt ? ` · ${bt}` : ""}</span>`
+                : `<span class="pf">无云端备份</span>`,
+            ].join("");
             return `<div class="cell ucard">
               <div class="u-head">
                 <div class="u-line">
@@ -257,6 +284,7 @@ import { LIC } from "../config";
                   </span>
                 </div>
                 <span class="u-meta">#${u.id} · 注册 ${dateStr(u.created_at)} · 最近登录 ${dateStr(u.last_login_at)}</span>
+                <div class="u-prof">${prof}</div>
               </div>
               <div class="u-lics">${lics || '<span class="none">未绑定激活码</span>'}</div>
             </div>`;
@@ -789,11 +817,11 @@ import { LIC } from "../config";
   .pmsg.bad { color: var(--red); }
 
   /* ============ 汇总卡 / 用户列表：容器是静态节点走此处；卡体由脚本生成，样式在文末 is:global ============ */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); margin-bottom: var(--gap); animation: rise 0.6s 0.06s var(--ease) both; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); margin-bottom: var(--gap); animation: rise 0.6s 0.06s var(--ease) both; }
   .ulist { display: flex; flex-direction: column; gap: 12px; animation: rise 0.6s 0.12s var(--ease) both; }
 
-  @media (max-width: 640px) {
-    .stats { grid-template-columns: 1fr; }
+  @media (max-width: 899px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 639px) {
@@ -848,9 +876,9 @@ import { LIC } from "../config";
 </style>
 
 <!-- 用户一览的卡体同样由脚本 render()/renderList() 生成，无作用域属性——规则必须全局。
-     类名 .stat/.s-b/.ucard/.u-line/.lic-*/.chip/.del/.none 为本页专属，不会外溢。 -->
+     类名 .stat/.s-b/.ucard/.u-line/.u-prof/.pf/.lic-*/.chip/.del/.none 为本页专属，不会外溢。 -->
 <style is:global>
-  /* ---- 汇总卡：图标块 + 数字 + 说明，与定价卡头同节奏；三卡各配一色 ---- */
+  /* ---- 汇总卡：图标块 + 数字 + 说明，与定价卡头同节奏；四卡各配一色 ---- */
   .stat { display: flex; align-items: center; gap: 14px; padding: 15px 18px; }
   .stat .ico {
     width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none;
@@ -860,6 +888,7 @@ import { LIC } from "../config";
   .stat .ico .ic { width: 19px; height: 19px; }
   .stat--lic .ico { color: var(--violet); background: color-mix(in oklab, var(--violet) 9%, transparent); border-color: color-mix(in oklab, var(--violet) 30%, transparent); }
   .stat--sub .ico { color: var(--green); background: color-mix(in oklab, var(--green) 9%, transparent); border-color: color-mix(in oklab, var(--green) 28%, transparent); }
+  .stat--bak .ico { color: var(--gold); background: color-mix(in oklab, var(--gold) 9%, transparent); border-color: color-mix(in oklab, var(--gold) 30%, transparent); }
   .s-b { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .s-b b { font-size: 1.45rem; font-weight: 780; letter-spacing: -0.01em; line-height: 1.15; font-variant-numeric: tabular-nums; }
   .s-b span { font-size: 0.82rem; color: var(--ink-3); }
@@ -870,6 +899,19 @@ import { LIC } from "../config";
   .u-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .u-mail { font-size: 1rem; font-weight: 720; color: var(--ink-1); word-break: break-all; min-width: 0; }
   .u-meta { font-size: 0.79rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  /* ---- 账号信息行（昵称/头像/云端备份）：一行安静元信息，点号分段与 u-meta 同节奏；
+         缺失项退灰（.pf 默认）、已设项提一档（.pf-on）、有备份绿点轻强调（.pf-bak） ---- */
+  .u-prof { display: flex; align-items: center; flex-wrap: wrap; font-size: 0.78rem; line-height: 1.6; font-variant-numeric: tabular-nums; }
+  .u-prof .pf { color: var(--ink-3); font-weight: 500; }
+  .u-prof .pf + .pf::before { content: "·"; margin: 0 7px; color: color-mix(in oklab, var(--ink-1) 24%, transparent); }
+  .u-prof .pf-on { color: var(--ink-2); font-weight: 620; }
+  .u-prof .pf-bak { color: var(--ink-2); font-weight: 640; }
+  .pf-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    margin-right: 6px; vertical-align: 1px;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--green) 14%, transparent);
+  }
 
   /* 删除：危险操作——平时是安静的灰描边幽灵按钮，hover 才亮红（按钮文案会被脚本改写，不放图标） */
   .del {
