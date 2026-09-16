@@ -25,7 +25,7 @@ npm run build && npx wrangler pages deploy dist --project-name boboai-web
 
 ## 结构
 
-- `src/config.ts`——**全站共享常量**：`VERSION` / `VCODE` / `APK`（由版本号派生）/ `GITHUB`（备用渠道）/ `MIRROR` / `SITE` / `LIC`（账号后端，dev 指本地 wrangler），以及网页版一组 `DAEMON*`。各页面 import 使用，禁止在标记里硬编码版本号。
+- `src/config.ts`——**全站共享常量**：`VERSION` / `VCODE` / `APK`（由版本号派生）/ `GITHUB`（备用渠道）/ `MIRROR` / `SITE` / `LIC`（账号后端，dev 指本地 wrangler），以及网页版一组 `DAEMON*`。各页面 import 使用，禁止在标记里硬编码版本号。 `src/pages/version.json.ts` 构建期从 config.ts 生成 `/version.json`（App 内检查更新的官网首选源，App 拿不到时降级 GitHub）——发版流程不变，无需手动维护。
 - `src/layouts/Layout.astro`——HTML 外壳 + 全局样式：设计令牌（`:root` CSS 变量：`--bg/--s1~3`、文字三档 `--ink-1/2/3`、蓝族主色 `--blue` 族、六格辅助色 `--violet/--orange/--gold/--magenta`、语义 `--red/--green`）、`.btn`/`.cell`/`.eyebrow` 等全局类、内联 SVG 雪碧图。新增颜色应复用或扩展这些令牌，不要硬编码十六进制值。
 - `src/components/`——共享组件：`Nav.astro`（`variant: "home" | "sub"`；`ctaLabel` 传空串隐藏右侧按钮；登录态是运行时渐进增强——组件尾部内联脚本读本机 `bobo_token`+`bobo_email`，右上角换成「首字母头像 + 邮箱」胶囊链到 `/account/`，无 JS/未登录维持登录按钮）、`Footer.astro`、`Aurora.astro`（流动极光背景层，`strength: "full" | "soft"`）。
 - `src/pages/`——核心页面（另有 `app.astro` 网页版、`privacy.astro` 隐私政策）：
