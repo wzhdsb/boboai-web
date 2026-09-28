@@ -1,7 +1,7 @@
 // ===== 全站共享常量：发新版本只改这里（各页面 import 使用，禁止在标记里硬编码版本号） =====
 
-export const VERSION = "v1.17.0";
-export const VCODE = 42;
+export const VERSION = "v1.17.1";
+export const VCODE = 43;
 
 // 全站下载按钮统一用这一个直链（文件在 public/apk/，已 gitignore，见 CLAUDE.md 获取命令）
 export const APK = `/apk/bobo-${VERSION}.apk`;
